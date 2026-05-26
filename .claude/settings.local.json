@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s \"https://pokeapi.co/api/v2/item-attribute/holdable\")",
+      "Bash(curl -s \"https://pokeapi.co/api/v2/item-attribute/holdable-active\")",
+      "Bash(curl -s \"https://pokeapi.co/api/v2/item-attribute/holdable-passive\")",
+      "Bash(python -c \"import sys, json; d = json.load\\(sys.stdin\\); print\\(f'count: {len\\(d[\\\\\"items\\\\\"]\\)}'\\); print\\('first 10:', [i['name'] for i in d['items'][:10]]\\)\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data', c => s+=c\\); process.stdin.on\\('end', \\(\\) => { const d = JSON.parse\\(s\\); console.log\\('passive count:', d.items.length\\); const names = d.items.map\\(i => i.name\\); console.log\\('Leftovers?', names.includes\\('leftovers'\\), 'Eviolite?', names.includes\\('eviolite'\\), 'Master Ball?', names.includes\\('master-ball'\\), 'Potion?', names.includes\\('potion'\\)\\); }\\);\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data', c => s+=c\\); process.stdin.on\\('end', \\(\\) => { const d = JSON.parse\\(s\\); console.log\\('active count:', d.items.length\\); const names = d.items.map\\(i => i.name\\); console.log\\('Leftovers?', names.includes\\('leftovers'\\), 'Choice Band?', names.includes\\('choice-band'\\), 'Master Ball?', names.includes\\('master-ball'\\), 'Potion?', names.includes\\('potion'\\), 'Sitrus Berry?', names.includes\\('sitrus-berry'\\)\\); }\\);\")",
+      "Bash(curl -s \"https://pokeapi.co/api/v2/pokemon/658\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data', c => s+=c\\); process.stdin.on\\('end', \\(\\) => { const d = JSON.parse\\(s\\); console.log\\('greninja game_indices:', d.game_indices.length\\); }\\);\")",
+      "Bash(curl -s \"https://pokeapi.co/api/v2/pokemon-species/658\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data', c => s+=c\\); process.stdin.on\\('end', \\(\\) => { const d = JSON.parse\\(s\\); const en = d.flavor_text_entries.filter\\(e => e.language.name === 'en'\\); const versions = Array.from\\(new Set\\(en.map\\(e => e.version.name\\)\\)\\); console.log\\('greninja species en versions:', versions\\); }\\);\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data', c => s+=c\\); process.stdin.on\\('end', \\(\\) => { const d = JSON.parse\\(s\\); console.log\\('greninja regional dex entries:', d.pokedex_numbers.map\\(p => p.pokedex.name\\)\\); }\\);\")",
+      "Bash(curl -s \"https://pokeapi.co/api/v2/pokemon-species/6\")",
+      "Bash(node -e \"let s=''; process.stdin.on\\('data', c => s+=c\\); process.stdin.on\\('end', \\(\\) => { const d = JSON.parse\\(s\\); console.log\\(JSON.stringify\\(d.varieties.map\\(v => \\({ name: v.pokemon.name, is_default: v.is_default }\\)\\), null, 2\\)\\); }\\);\")",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5175/)",
+      "Bash(npx kill-port *)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Select-Object Id, Name, MainWindowTitle)",
+      "PowerShell(Get-Process -Id 27564)",
+      "Bash(ping -n 4 127.0.0.1)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Fix TypeScript compilation errors for Vercel deployment *)"
+    ]
+  }
+}
