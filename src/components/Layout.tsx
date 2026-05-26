@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { getPrefs } from '../lib/store';
@@ -65,18 +66,60 @@ export function Layout() {
 }
 
 function MobileMenu() {
+  const [open, setOpen] = useState(false);
+  const loc = useLocation();
+
+  // close on navigation
+  useEffect(() => setOpen(false), [loc.pathname]);
+
   return (
-    <details className="relative">
-      <summary className="list-none cursor-pointer p-2 rounded-md bg-bg-elev/40 text-sm">☰</summary>
-      <div className="absolute right-0 mt-2 w-48 bg-bg-elev border border-line rounded-md shadow-card p-2 flex flex-col gap-1">
-        <NavLink to="/" className="px-2 py-1 rounded hover:bg-bg">Home</NavLink>
-        <NavLink to="/pokedex" className="px-2 py-1 rounded hover:bg-bg">Pokédex</NavLink>
-        <NavLink to="/catch-tracker" className="px-2 py-1 rounded hover:bg-bg">Catch Tracker</NavLink>
-        <NavLink to="/collection" className="px-2 py-1 rounded hover:bg-bg">Collection</NavLink>
-        <NavLink to="/team-builder" className="px-2 py-1 rounded hover:bg-bg">Team Builder</NavLink>
-        <NavLink to="/settings" className="px-2 py-1 rounded hover:bg-bg">Settings</NavLink>
+    <>
+      <button
+        aria-label="Open menu"
+        onClick={() => setOpen(true)}
+        className="p-2 rounded-md bg-bg-elev/40"
+      >
+        ☰
+      </button>
+
+      {/* Slide-over panel */}
+      <div
+        className={
+          'fixed inset-0 z-50 pointer-events-none ' +
+          (open ? 'pointer-events-auto' : '')
+        }
+        aria-hidden={!open}
+      >
+        {/* Backdrop */}
+        <div
+          onClick={() => setOpen(false)}
+          className={
+            'absolute inset-0 bg-black/40 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')
+          }
+        />
+
+        {/* Panel */}
+        <aside
+          className={
+            'absolute left-0 top-0 bottom-0 w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform ' +
+            (open ? 'translate-x-0' : '-translate-x-full')
+          }
+        >
+          <div className="p-4 flex items-center justify-between">
+            <div className="font-semibold">Menu</div>
+            <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-1">✕</button>
+          </div>
+          <nav className="flex flex-col p-2 gap-1">
+            <NavLink onClick={() => setOpen(false)} to="/" className="px-3 py-2 rounded hover:bg-bg">Home</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/pokedex" className="px-3 py-2 rounded hover:bg-bg">Pokédex</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="px-3 py-2 rounded hover:bg-bg">Catch Tracker</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/collection" className="px-3 py-2 rounded hover:bg-bg">Collection</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/team-builder" className="px-3 py-2 rounded hover:bg-bg">Team Builder</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/settings" className="px-3 py-2 rounded hover:bg-bg">Settings</NavLink>
+          </nav>
+        </aside>
       </div>
-    </details>
+    </>
   );
 }
 
