@@ -6,6 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 // Edge with offline support for the app shell and aggressive caching of
 // PokéAPI responses (immutable data).
 export default defineConfig({
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
   plugins: [
     react(),
     VitePWA({
