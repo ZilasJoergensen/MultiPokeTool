@@ -105,23 +105,23 @@ function MobileMenu() {
         {/* Panel */}
         <aside
           className={
-            'fixed left-0 top-0 bottom-0 w-72 sm:w-64 bg-bg-elev/100 border-r border-line shadow-xl transform transition-transform z-60 overflow-y-auto ' +
+            'fixed left-0 top-0 bottom-0 w-80 sm:w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform z-50 overflow-y-auto ' +
             (open ? 'translate-x-0' : '-translate-x-full')
           }
           role="dialog"
           aria-modal="true"
         >
-          <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev/100 z-70 border-b border-line">
+          <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev z-50 border-b border-line">
             <div className="font-semibold">Menu</div>
             <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-2 rounded-md hover:bg-bg/20">✕</button>
           </div>
-          <nav className="flex flex-col p-4 gap-2">
-            <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Home</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Pokédex</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Catch Tracker</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/collection" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Collection</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Team Builder</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/settings" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Settings</NavLink>
+          <nav className="flex flex-col p-4 gap-2 text-text">
+            <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Home</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Pokédex</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Catch Tracker</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/collection" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Collection</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Team Builder</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/settings" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Settings</NavLink>
           </nav>
         </aside>
       </div>
