@@ -31,7 +31,7 @@ export function Layout() {
 
   return (
     <div className="min-h-full flex flex-col">
-      <header className="sticky top-0 z-30 backdrop-blur bg-bg/80 border-b border-line">
+      <header className="sticky top-0 z-30 backdrop-blur bg-bg/80 border-b border-line pt-[max(0.5rem,env(safe-area-inset-top))]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center gap-4">
           <NavLink to="/" className="flex items-center gap-2 font-extrabold tracking-tight">
             <span className="w-7 h-7 rounded-full bg-accent grid place-items-center text-white shadow-card">
@@ -119,7 +119,7 @@ function MobileMenu() {
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
         onClick={() => setOpen((s) => !s)}
-        className="p-2 rounded-md bg-bg-elev/40"
+        className="p-2.5 rounded-md bg-bg-elev/40"
       >
         {open ? '✕' : '☰'}
       </button>

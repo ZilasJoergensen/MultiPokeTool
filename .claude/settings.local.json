@@ -54,7 +54,8 @@
       "mcp__Claude_in_Chrome__browser_batch",
       "mcp__Claude_in_Chrome__navigate",
       "mcp__Claude_in_Chrome__computer",
-      "Bash(git commit -m 'Make Settings page responsive for mobile *)"
+      "Bash(git commit -m 'Make Settings page responsive for mobile *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

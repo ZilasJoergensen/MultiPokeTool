@@ -221,7 +221,7 @@ export function CatchTrackerPage() {
           <div className="flex items-center justify-between text-sm">
             <div>
               <div className="font-semibold text-base">{selectedGroup.label}</div>
-              {dexName && <div className="text-xs text-muted mt-0.5">{dexName}</div>}
+              {dexName && <div className="text-xs sm:text-xs text-muted mt-0.5">{dexName}</div>}
             </div>
             <span className="text-muted tabular-nums">{pct}% caught</span>
           </div>

@@ -246,7 +246,7 @@ export function DashboardPage() {
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-sm font-medium shrink-0">{g.short}</span>
                           {dexName && (
-                            <span className="text-[10px] text-muted truncate">{dexName} Dex</span>
+                            <span className="text-xs sm:text-[10px] text-muted truncate">{dexName} Dex</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">

@@ -143,7 +143,7 @@ export function PokemonDetailPage() {
           primary && isValidType(primary) && `before:absolute before:inset-0 before:opacity-20 before:bg-type-${primary}`,
         )}
       >
-        <div className="relative grid md:grid-cols-[260px,1fr] gap-4 p-4 sm:p-6">
+        <div className="relative grid md:grid-cols-[260px,1fr] gap-3 sm:gap-4 p-2 sm:p-6">
           <div className="flex flex-col items-center gap-2">
             {/* Sprite container is always present; HeroSprite fades the <img>
                 in once the image has loaded (or instantly if already cached). */}
@@ -176,9 +176,9 @@ export function PokemonDetailPage() {
             {/* ID / genus / generation row — reserve the line height so the
                 name below doesn't shift when these appear. */}
             <div className="flex items-baseline gap-3 flex-wrap min-h-[1.25rem]">
-              {p && <div className="text-xs font-mono text-muted">{padId(p.id)}</div>}
+              {p && <div className="text-xs sm:text-xs font-mono text-muted">{padId(p.id)}</div>}
               {s && (
-                <div className="text-xs text-muted">
+                <div className="text-xs sm:text-xs text-muted">
                   {pickEnglish(s.genera)?.genus ?? ''} · {prettyName(s.generation.name)}
                 </div>
               )}
@@ -1668,6 +1668,7 @@ function QuickActions({
   }
 
   const anyCaught = catchRecords?.some((r) => r.status === 'caught');
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -1714,18 +1715,57 @@ function QuickActions({
         </div>
       )}
 
-      {/* Start Hunt */}
-      {ownedGroups.length > 0 && (
-        <div className="relative">
-          <button
-            type="button"
-            className="btn text-sm"
-            onClick={() => { setHuntOpen((x) => !x); setCatchOpen(false); setTeamOpen(false); }}
-          >
-            ✨ Hunt
-          </button>
-          {huntOpen && (
-            <div className="absolute mt-1 z-20 w-52 card p-3 space-y-3">
+      {/* More dropdown (Hunt, Team, Favorite) */}
+      <div className="relative">
+        <button
+          type="button"
+          className="btn text-sm"
+          onClick={() => setMoreOpen(!moreOpen)}
+          title="More actions"
+        >
+          More ↓
+        </button>
+        {moreOpen && (
+          <div className="absolute mt-1 z-20 w-48 card">
+            {/* Start Hunt */}
+            {ownedGroups.length > 0 && (
+              <button
+                type="button"
+                className="w-full text-left px-4 py-2 text-sm hover:bg-bg-hover transition-colors border-b border-line/30"
+                onClick={() => { setHuntOpen(true); setCatchOpen(false); setTeamOpen(false); setMoreOpen(false); }}
+              >
+                ✨ Start Hunt
+              </button>
+            )}
+            {/* + Team */}
+            <button
+              type="button"
+              className="w-full text-left px-4 py-2 text-sm hover:bg-bg-hover transition-colors border-b border-line/30"
+              onClick={() => { setTeamOpen(true); setCatchOpen(false); setHuntOpen(false); setMoreOpen(false); }}
+            >
+              ⚔ Add to Team
+            </button>
+            {/* Favorite */}
+            <button
+              type="button"
+              className="w-full text-left px-4 py-2 text-sm hover:bg-bg-hover transition-colors"
+              onClick={() => { toggleFavorite(pokemonId, pokemonName); setMoreOpen(false); }}
+            >
+              {fav ? '★ Unfavorite' : '☆ Favorite'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden modals for Hunt and Team */}
+      {huntOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 flex items-end sm:items-center justify-center" onClick={() => setHuntOpen(false)}>
+          <div className="bg-bg-card card m-4 p-4 w-full sm:w-96 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Start Shiny Hunt</h3>
+              <button type="button" className="text-muted hover:text-text" onClick={() => setHuntOpen(false)}>✕</button>
+            </div>
+            <div className="space-y-3">
               <div>
                 <label className="text-xs text-muted block mb-1">Game</label>
                 <select
@@ -1758,27 +1798,26 @@ function QuickActions({
                 Start Hunt
               </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* + Team */}
-      <AddToTeam
-        pokemonId={pokemonId}
-        pokemonName={pokemonName}
-        open={teamOpen}
-        setOpen={(v) => { setTeamOpen(v); if (v) { setCatchOpen(false); setHuntOpen(false); } }}
-      />
-
-      {/* Favorite */}
-      <button
-        type="button"
-        className={clsx('btn text-sm', fav && 'text-yellow-300 border-yellow-300/50')}
-        onClick={() => toggleFavorite(pokemonId, pokemonName)}
-        title={fav ? 'Remove from favorites' : 'Add to favorites'}
-      >
-        {fav ? '★ Favorited' : '☆ Favorite'}
-      </button>
+      {teamOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 flex items-end sm:items-center justify-center" onClick={() => setTeamOpen(false)}>
+          <div className="bg-bg-card card m-4 p-4 w-full sm:w-96 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Add to Team</h3>
+              <button type="button" className="text-muted hover:text-text" onClick={() => setTeamOpen(false)}>✕</button>
+            </div>
+            <AddToTeam
+              pokemonId={pokemonId}
+              pokemonName={pokemonName}
+              open={teamOpen}
+              setOpen={setTeamOpen}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

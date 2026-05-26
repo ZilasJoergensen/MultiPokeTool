@@ -56,6 +56,7 @@ export function PokedexPage() {
   const [pickedAbility, setPickedAbility] = useState<string | null>(null);
   const [pickedMove, setPickedMove] = useState<string | null>(null);
   const [showTop, setShowTop] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     function onScroll() {
@@ -276,10 +277,25 @@ export function PokedexPage() {
           </div>
         </div>
 
-        {/* Non-sticky card: filters and actions */}
+        {/* Non-sticky card: filters and actions (collapsible on mobile) */}
         <div className="card p-4 sm:p-5">
-          <TypeFilter selected={typeFilter} onChange={setTypeFilter} mode={typeMode} onModeChange={setTypeMode} />
-          <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
+          {/* Mobile filter toggle button */}
+          <div className="sm:hidden mb-3">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="btn w-full text-sm flex items-center justify-between"
+            >
+              <span>Filters</span>
+              <span>{filtersOpen ? '▲' : '▼'}</span>
+            </button>
+          </div>
+
+          {/* Filter content (always shown on sm+, toggled on mobile) */}
+          {(filtersOpen || window.innerWidth >= 640) && (
+            <>
+              <TypeFilter selected={typeFilter} onChange={setTypeFilter} mode={typeMode} onModeChange={setTypeMode} />
+              <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
             <div className="flex flex-col sm:flex-row gap-2">
               {searchMode === 'name' && (
                 <button
@@ -318,6 +334,8 @@ export function PokedexPage() {
             <div className="text-[11px] text-yellow-400/80 mt-2">
               Evolution expansion paused — too many matches ({filtered.length}). Narrow your search to under 40.
             </div>
+          )}
+            </>
           )}
         </div>
 
