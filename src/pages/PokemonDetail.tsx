@@ -143,7 +143,7 @@ export function PokemonDetailPage() {
           primary && isValidType(primary) && `before:absolute before:inset-0 before:opacity-20 before:bg-type-${primary}`,
         )}
       >
-        <div className="relative grid md:grid-cols-[260px,1fr] gap-3 sm:gap-4 p-2 sm:p-6">
+        <div className="relative grid md:grid-cols-[260px,1fr] gap-3 sm:gap-4 px-2 py-1 sm:p-6">
           <div className="flex flex-col items-center gap-2">
             {/* Sprite container is always present; HeroSprite fades the <img>
                 in once the image has loaded (or instantly if already cached). */}
@@ -1062,7 +1062,7 @@ function EvolutionStrip({
       <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">
         {stages.length > 1 ? 'Evolution Line' : 'Alternate Forms'}
       </h2>
-      <div className="flex items-center flex-wrap gap-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-y-4 gap-x-2">
         {stages.map((stage, idx) => (
           <div key={stage.species.name + idx} className="flex items-center">
             {idx > 0 && <EvoArrow label={evoConditionsLabel(stage.details)} />}

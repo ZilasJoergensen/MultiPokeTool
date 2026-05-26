@@ -57,10 +57,13 @@ export function PokedexPage() {
   const [pickedMove, setPickedMove] = useState<string | null>(null);
   const [showTop, setShowTop] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isScrolledPastFilters, setIsScrolledPastFilters] = useState(false);
 
   useEffect(() => {
     function onScroll() {
       setShowTop(window.scrollY > 300);
+      // Show compact filter bar after scrolling past the filter card (~400px from top)
+      setIsScrolledPastFilters(window.scrollY > 400);
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -230,8 +233,8 @@ export function PokedexPage() {
               {searchMode === 'name' ? (
                 <div className="relative flex-1">
                   <input
-                    className="input w-full pl-9"
-                    placeholder="Search by name or #0025…"
+                    className="input w-full pl-10"
+                    placeholder="Search Pokémon by name or #0025…"
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                   />
@@ -338,6 +341,24 @@ export function PokedexPage() {
             </>
           )}
         </div>
+
+        {/* Compact sticky filter bar — appears on mobile when scrolling past full filters */}
+        {isScrolledPastFilters && (
+          <div className="sticky top-14 z-20 md:hidden card p-2 bg-bg-card/95 backdrop-blur-sm border-b border-line/50">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted whitespace-nowrap">
+                {filtered.length.toLocaleString()} results
+              </span>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className="btn text-xs px-2 py-1 ml-auto"
+              >
+                Filters {filtersOpen ? '▲' : '▼'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <RecentlyViewedRail />
 
