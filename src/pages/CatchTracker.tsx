@@ -306,7 +306,7 @@ export function CatchTrackerPage() {
                   itemSize={rowHeight}
                   width={containerWidth}
                 >
-                  {({ index: rowIndex, style }) => (
+                  {( { index: rowIndex, style }: { index: number; style: React.CSSProperties } ) => (
                     <div style={style} className="flex gap-2 px-1">
                       {Array.from({ length: cols }).map((_, colIndex) => {
                         const itemIndex = rowIndex * cols + colIndex;
