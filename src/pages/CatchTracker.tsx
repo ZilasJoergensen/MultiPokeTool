@@ -1,9 +1,10 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { api, idFromUrl } from '../lib/api';
 import { Sprite } from '../components/Sprite';
+import { FixedSizeList as List } from 'react-window';
 import { padId, prettyName } from '../lib/utils';
 import { GAME_GROUPS, type GameGroup } from '../lib/games';
 import {
@@ -100,6 +101,23 @@ export function CatchTrackerPage() {
   // Catch map for selected game: pokemonId → status
   const [catchMap, setCatchMap] = useState<Map<number, CatchStatus>>(new Map());
   const [catchesLoading, setCatchesLoading] = useState(false);
+
+  // Responsive virtualization: measure container width to compute columns
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    setContainerWidth(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -272,46 +290,114 @@ export function CatchTrackerPage() {
             : 'No Pokémon found.'}
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2">
-          {filtered.map((p) => {
-            const status = catchMap.get(p.id);
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => toggleStatus(p)}
-                title={`${prettyName(p.name)} — click to mark caught, again for seen, again to clear`}
-                className={clsx(
-                  'card p-2 flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer select-none',
-                  status === 'caught'
-                    ? 'border-green-500/70 bg-green-500/10'
-                    : status === 'seen'
-                      ? 'border-yellow-500/70 bg-yellow-500/10'
-                      : 'opacity-50 hover:opacity-100',
-                )}
-              >
-                <div className="relative">
-                  <Sprite id={p.id} name={p.name} size={56} className="drop-shadow-sm" />
-                  {status && (
-                    <span
-                      className={clsx(
-                        'absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-bold grid place-items-center shadow-card',
-                        status === 'caught'
-                          ? 'bg-green-500 text-white'
-                          : 'bg-yellow-500 text-black',
-                      )}
-                    >
-                      {status === 'caught' ? '✓' : '◉'}
-                    </span>
+        <div ref={containerRef}>
+          {containerWidth > 0 ? (
+            (() => {
+              const minColWidth = 88; // matches previous minmax
+              const gap = 8;
+              const cols = Math.max(1, Math.floor((containerWidth + gap) / (minColWidth + gap)));
+              const rowCount = Math.ceil(filtered.length / cols);
+              const rowHeight = 120; // approximate card height
+
+              return (
+                <List
+                  height={Math.min(rowCount * rowHeight, window.innerHeight - 200)}
+                  itemCount={rowCount}
+                  itemSize={rowHeight}
+                  width={containerWidth}
+                >
+                  {({ index: rowIndex, style }) => (
+                    <div style={style} className="flex gap-2 px-1">
+                      {Array.from({ length: cols }).map((_, colIndex) => {
+                        const itemIndex = rowIndex * cols + colIndex;
+                        const p = filtered[itemIndex];
+                        if (!p) return <div key={colIndex} className="flex-1" />;
+                        const status = catchMap.get(p.id);
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => toggleStatus(p)}
+                            title={`${prettyName(p.name)} — click to mark caught, again for seen, again to clear`}
+                            className={clsx(
+                              'card p-2 flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer select-none flex-1',
+                              status === 'caught'
+                                ? 'border-green-500/70 bg-green-500/10'
+                                : status === 'seen'
+                                  ? 'border-yellow-500/70 bg-yellow-500/10'
+                                  : 'opacity-50 hover:opacity-100',
+                            )}
+                          >
+                            <div className="relative">
+                              <Sprite id={p.id} name={p.name} size={56} className="drop-shadow-sm" />
+                              {status && (
+                                <span
+                                  className={clsx(
+                                    'absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-bold grid place-items-center shadow-card',
+                                    status === 'caught'
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-yellow-500 text-black',
+                                  )}
+                                >
+                                  {status === 'caught' ? '✓' : '◉'}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-muted leading-none">{padId(p.id)}</div>
+                            <div className="text-[11px] font-medium leading-tight truncate w-full">
+                              {prettyName(p.name)}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
-                </div>
-                <div className="text-[10px] text-muted leading-none">{padId(p.id)}</div>
-                <div className="text-[11px] font-medium leading-tight truncate w-full">
-                  {prettyName(p.name)}
-                </div>
-              </button>
-            );
-          })}
+                </List>
+              );
+            })()
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2">
+              {filtered.map((p) => {
+                const status = catchMap.get(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => toggleStatus(p)}
+                    title={`${prettyName(p.name)} — click to mark caught, again for seen, again to clear`}
+                    className={clsx(
+                      'card p-2 flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer select-none',
+                      status === 'caught'
+                        ? 'border-green-500/70 bg-green-500/10'
+                        : status === 'seen'
+                          ? 'border-yellow-500/70 bg-yellow-500/10'
+                          : 'opacity-50 hover:opacity-100',
+                    )}
+                  >
+                    <div className="relative">
+                      <Sprite id={p.id} name={p.name} size={56} className="drop-shadow-sm" />
+                      {status && (
+                        <span
+                          className={clsx(
+                            'absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-bold grid place-items-center shadow-card',
+                            status === 'caught'
+                              ? 'bg-green-500 text-white'
+                              : 'bg-yellow-500 text-black',
+                          )}
+                        >
+                          {status === 'caught' ? '✓' : '◉'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-muted leading-none">{padId(p.id)}</div>
+                    <div className="text-[11px] font-medium leading-tight truncate w-full">
+                      {prettyName(p.name)}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
