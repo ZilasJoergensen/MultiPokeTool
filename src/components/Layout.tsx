@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -73,16 +74,36 @@ function MobileMenu() {
   useEffect(() => setOpen(false), [loc.pathname]);
 
   // lock body scroll when menu is open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
+  const panel = (
+    <div className={'fixed inset-0 z-60 ' + (open ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!open}>
+      <div
+        onClick={() => setOpen(false)}
+        className={'absolute inset-0 bg-black/60 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')}
+      />
+
+      <aside
+        className={
+          'fixed left-0 top-0 bottom-0 w-80 sm:w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform z-60 overflow-y-auto ' +
+          (open ? 'translate-x-0' : '-translate-x-full')
+        }
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev z-60 border-b border-line">
+          <div className="font-semibold">Menu</div>
+          <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-2 rounded-md hover:bg-bg/20">✕</button>
+        </div>
+        <nav className="flex flex-col p-4 gap-2 text-text">
+          <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Home</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Pokédex</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Catch Tracker</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/collection" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Collection</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Team Builder</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/settings" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Settings</NavLink>
+        </nav>
+      </aside>
+    </div>
+  );
 
   return (
     <>
@@ -93,28 +114,9 @@ function MobileMenu() {
       >
         ☰
       </button>
-
-      {/* Slide-over panel */}
-      <div className={'fixed inset-0 z-50 ' + (open ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!open}>
-        {/* Backdrop */}
-        <div
-          onClick={() => setOpen(false)}
-          className={'absolute inset-0 bg-black/50 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')}
-        />
-
-        {/* Panel */}
-        <aside
-          className={
-            'fixed left-0 top-0 bottom-0 w-80 sm:w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform z-50 overflow-y-auto ' +
-            (open ? 'translate-x-0' : '-translate-x-full')
-          }
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev z-50 border-b border-line">
-            <div className="font-semibold">Menu</div>
-            <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-2 rounded-md hover:bg-bg/20">✕</button>
-          </div>
+      {createPortal(panel, document.body)}
+    </>
+  );
           <nav className="flex flex-col p-4 gap-2 text-text">
             <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Home</NavLink>
             <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Pokédex</NavLink>
