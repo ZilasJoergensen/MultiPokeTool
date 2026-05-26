@@ -75,21 +75,29 @@ function MobileMenu() {
 
   // lock body scroll when menu is open
   const panel = (
-    <div className={'fixed inset-0 z-60 ' + (open ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!open}>
+    <div
+      aria-hidden={!open}
+      style={{ zIndex: 9999 }}
+      className={open ? 'pointer-events-auto fixed inset-0' : 'pointer-events-none fixed inset-0'}
+    >
       <div
         onClick={() => setOpen(false)}
-        className={'absolute inset-0 bg-black/60 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')}
+        style={{ zIndex: 9999 }}
+        className={
+          'absolute inset-0 bg-black/60 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')
+        }
       />
 
       <aside
-        className={
-          'fixed left-0 top-0 bottom-0 w-80 sm:w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform z-60 overflow-y-auto ' +
-          (open ? 'translate-x-0' : '-translate-x-full')
-        }
         role="dialog"
         aria-modal="true"
+        style={{ zIndex: 10000 }}
+        className={
+          'fixed left-0 top-0 bottom-0 w-4/5 sm:w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform overflow-y-auto ' +
+          (open ? 'translate-x-0' : '-translate-x-full')
+        }
       >
-        <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev z-60 border-b border-line">
+        <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev border-b border-line">
           <div className="font-semibold">Menu</div>
           <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-2 rounded-md hover:bg-bg/20">✕</button>
         </div>
@@ -108,11 +116,12 @@ function MobileMenu() {
   return (
     <>
       <button
-        aria-label="Open menu"
-        onClick={() => setOpen(true)}
+        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-expanded={open}
+        onClick={() => setOpen((s) => !s)}
         className="p-2 rounded-md bg-bg-elev/40"
       >
-        ☰
+        {open ? '✕' : '☰'}
       </button>
       {createPortal(panel, document.body)}
     </>
