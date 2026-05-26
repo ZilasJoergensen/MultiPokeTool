@@ -28,7 +28,17 @@
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'Fix TypeScript compilation errors for Vercel deployment *)"
+      "Bash(git commit -m 'Fix TypeScript compilation errors for Vercel deployment *)",
+      "Bash(git rm *)",
+      "Bash(echo \"Pokedex/\")",
+      "Bash(git commit -m 'Remove nested Pokedex directory from git \\(separate desktop app project\\) *)",
+      "Bash(git commit -m 'Add comprehensive README documenting Pokédex Multi-Tool as AI-generated personal project *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'Remove pnpm workspace config and nested Pokedex directory to fix Vercel build *)",
+      "Bash(git commit -m 'Remove pnpm workspace config to fix Vercel build *)",
+      "Bash(git commit -m 'Remove root property from vercel.json *)",
+      "Bash(git commit -m 'Add outputDirectory configuration to vercel.json *)",
+      "Bash(git commit -m 'Remove pnpm-lock.yaml and use npm for consistency *)"
     ]
   }
 }
