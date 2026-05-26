@@ -256,7 +256,15 @@ export function CatchTrackerPage() {
 
       {/* Grid */}
       {isLoading || catchesLoading ? (
-        <div className="text-center py-16 text-muted">Loading…</div>
+        // Simple skeleton grid for mobile perceived performance
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="card p-2 flex flex-col items-center gap-0.5 animate-pulse">
+              <div className="w-14 h-14 bg-bg-elev rounded-md" />
+              <div className="h-3 w-10 bg-bg-elev rounded mt-2" />
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
         <div className="card p-10 text-center text-muted">
           {statusFilter !== 'all'

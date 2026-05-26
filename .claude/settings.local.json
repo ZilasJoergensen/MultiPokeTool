@@ -38,7 +38,18 @@
       "Bash(git commit -m 'Remove pnpm workspace config to fix Vercel build *)",
       "Bash(git commit -m 'Remove root property from vercel.json *)",
       "Bash(git commit -m 'Add outputDirectory configuration to vercel.json *)",
-      "Bash(git commit -m 'Remove pnpm-lock.yaml and use npm for consistency *)"
+      "Bash(git commit -m 'Remove pnpm-lock.yaml and use npm for consistency *)",
+      "Bash(git commit -m 'Add explicit build output configuration to vite.config.ts *)",
+      "Bash(git commit -m 'Remove outputDirectory from vercel.json and rely on auto-detection *)",
+      "Bash(vercel project *)",
+      "Bash(vercel inspect *)",
+      "Bash(vercel env *)",
+      "Read(//c/Users/zilas/.local/share/com.vercel.cli/**)",
+      "Read(//c/Users/zilas/AppData/Roaming/com.vercel.cli/**)",
+      "Bash(curl -s \"https://api.vercel.com/v9/projects/pokedex\" -H \"Authorization: Bearer $\\(cat ~/.local/share/com.vercel.cli/auth.json || cat ~/AppData/Roaming/com.vercel.cli/auth.json)",
+      "Bash(find /c/Users/zilas -name \"*.json\" -path \"*vercel*\" 2>/dev/null | head -10)",
+      "Bash(vercel deploy *)",
+      "Bash(git commit -m 'Update README with live Vercel deployment link *)"
     ]
   }
 }
