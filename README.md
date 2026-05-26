@@ -6,6 +6,19 @@
 
 ---
 
+## 🚀 Live Demo
+
+**Try it now:** https://multipoke.vercel.app
+
+The app is deployed and ready to use! All data is stored locally on your device.
+
+### Install as App
+Since this is a Progressive Web App (PWA), you can add it to your home screen:
+- **iOS**: Open in Safari → Share → Add to Home Screen
+- **Android**: Open in Chrome → Menu → Install app
+
+---
+
 ## Overview
 
 **Pokédex Multi-Tool** is a web-based utility for Pokémon enthusiasts that combines several useful tools into one application:
@@ -34,11 +47,18 @@
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18+ 
-- npm or pnpm
+### Quick Start (No Installation)
+Visit **https://multipoke.vercel.app** and start using the app immediately. No setup required!
 
-### Installation
+### Local Development
+
+If you want to run the project locally for development:
+
+#### Prerequisites
+- Node.js 18+ 
+- npm
+
+#### Installation
 
 ```bash
 # Clone the repository
