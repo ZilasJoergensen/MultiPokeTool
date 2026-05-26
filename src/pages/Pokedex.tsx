@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { prefetchPokemonDetail, preloadSprite } from '../lib/prefetch';
@@ -199,7 +199,8 @@ export function PokedexPage() {
     (speciesQueries.some((q) => q.isLoading) || chainQueries.some((q) => q.isLoading));
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* Card with only the search controls sticky */}
       <div className="card p-4 sm:p-5">
         <div className="sticky top-14 z-20 bg-bg-card/90 -mx-4 sm:mx-0 p-4 sm:p-0">
@@ -351,8 +352,8 @@ export function PokedexPage() {
           ))}
         </div>
       )}
-    </div>
-    {showTop && (
+      </div>
+      {showTop && (
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label="Scroll to top"
@@ -360,7 +361,8 @@ export function PokedexPage() {
       >
         ↑
       </button>
-    )}
+      )}
+    </>
   );
 }
 
