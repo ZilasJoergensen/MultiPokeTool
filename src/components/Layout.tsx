@@ -72,6 +72,18 @@ function MobileMenu() {
   // close on navigation
   useEffect(() => setOpen(false), [loc.pathname]);
 
+  // lock body scroll when menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   return (
     <>
       <button
@@ -83,39 +95,33 @@ function MobileMenu() {
       </button>
 
       {/* Slide-over panel */}
-      <div
-        className={
-          'fixed inset-0 z-50 pointer-events-none ' +
-          (open ? 'pointer-events-auto' : '')
-        }
-        aria-hidden={!open}
-      >
+      <div className={'fixed inset-0 z-50 ' + (open ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!open}>
         {/* Backdrop */}
         <div
           onClick={() => setOpen(false)}
-          className={
-            'absolute inset-0 bg-black/40 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')
-          }
+          className={'absolute inset-0 bg-black/50 transition-opacity ' + (open ? 'opacity-100' : 'opacity-0')}
         />
 
         {/* Panel */}
         <aside
           className={
-            'absolute left-0 top-0 bottom-0 w-64 bg-bg-elev border-r border-line shadow-xl transform transition-transform ' +
+            'fixed left-0 top-0 bottom-0 w-72 sm:w-64 bg-bg-elev/100 border-r border-line shadow-xl transform transition-transform z-60 overflow-y-auto ' +
             (open ? 'translate-x-0' : '-translate-x-full')
           }
+          role="dialog"
+          aria-modal="true"
         >
-          <div className="p-4 flex items-center justify-between">
+          <div className="p-4 flex items-center justify-between sticky top-0 bg-bg-elev/100 z-70 border-b border-line">
             <div className="font-semibold">Menu</div>
-            <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-1">✕</button>
+            <button aria-label="Close menu" onClick={() => setOpen(false)} className="p-2 rounded-md hover:bg-bg/20">✕</button>
           </div>
-          <nav className="flex flex-col p-2 gap-1">
-            <NavLink onClick={() => setOpen(false)} to="/" className="px-3 py-2 rounded hover:bg-bg">Home</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/pokedex" className="px-3 py-2 rounded hover:bg-bg">Pokédex</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="px-3 py-2 rounded hover:bg-bg">Catch Tracker</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/collection" className="px-3 py-2 rounded hover:bg-bg">Collection</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/team-builder" className="px-3 py-2 rounded hover:bg-bg">Team Builder</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/settings" className="px-3 py-2 rounded hover:bg-bg">Settings</NavLink>
+          <nav className="flex flex-col p-4 gap-2">
+            <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Home</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Pokédex</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Catch Tracker</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/collection" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Collection</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Team Builder</NavLink>
+            <NavLink onClick={() => setOpen(false)} to="/settings" className="block px-3 py-2 rounded-md text-base hover:bg-bg">Settings</NavLink>
           </nav>
         </aside>
       </div>
