@@ -489,13 +489,15 @@ function GameAppearances({
  * atomic — there is no useEffect that could race with onLoad and reset the
  * state after a cache-hit fires the event synchronously during React's commit.
  */
-function HeroSprite({ id, name, shiny }: { id: number; name: string; shiny: boolean }) {
+function HeroSprite({ id, name, shiny, size = 96 }: { id: number; name: string; shiny: boolean; size?: number }) {
   const url = spriteUrl(id, { shiny });
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   return (
     <img
       src={url}
       alt={name}
+      width={size}
+      height={size}
       onLoad={(e) => setLoadedUrl((e.currentTarget as HTMLImageElement).src)}
       className={clsx(
         'w-full h-full object-contain transition-opacity duration-300 ease-out',
