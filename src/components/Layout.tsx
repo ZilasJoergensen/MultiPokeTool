@@ -32,7 +32,7 @@ export function Layout() {
   return (
     <div className="min-h-full flex flex-col">
       <header className="sticky top-0 z-30 backdrop-blur bg-bg/80 border-b border-line">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-12 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center gap-4">
           <NavLink to="/" className="flex items-center gap-2 font-extrabold tracking-tight">
             <span className="w-7 h-7 rounded-full bg-accent grid place-items-center text-white shadow-card">
               <span className="w-3 h-3 rounded-full bg-white border-2 border-bg" />
@@ -59,7 +59,7 @@ export function Layout() {
           </div>
         </div>
       </header>
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 pt-4">
         <Outlet />
       </main>
     </div>
