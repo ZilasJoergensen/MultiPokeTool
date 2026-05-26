@@ -203,7 +203,8 @@ export function PokedexPage() {
       <div className="space-y-6">
       {/* Card with only the search controls sticky */}
       <div className="card p-4 sm:p-5">
-        <div className="sticky top-14 z-20 bg-bg-card/90 -mx-4 sm:mx-0 p-4 sm:p-0">
+        <div className="sticky top-14 z-30 p-0">
+          <div className="bg-bg-card/90 p-3 sm:p-0 rounded-md">
           {/* Search mode toggle */}
           <div className="inline-flex bg-bg-elev rounded-lg border border-line text-sm overflow-hidden">
             {(['name', 'ability', 'move'] as const).map((m) => (
@@ -226,7 +227,7 @@ export function PokedexPage() {
             ))}
           </div>
 
-          <div className="flex flex-col md:flex-row gap-3 md:items-start mt-3">
+            <div className="flex flex-col md:flex-row gap-3 md:items-start mt-3">
             {searchMode === 'name' ? (
               <div className="relative flex-1">
                 <input
@@ -353,15 +354,15 @@ export function PokedexPage() {
         </div>
       )}
       </div>
-      {showTop && (
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        aria-label="Scroll to top"
-        className="fixed bottom-6 right-4 sm:right-8 z-50 bg-bg-elev hover:bg-bg-hover p-3 rounded-full shadow-card"
-      >
-        ↑
-      </button>
-      )}
+        {showTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="Scroll to top"
+            className="fixed bottom-6 right-4 sm:right-8 z-50 bg-accent text-white p-2.5 rounded-full shadow-lg text-sm"
+          >
+            <span aria-hidden>⬆</span>
+          </button>
+        )}
     </>
   );
 }
