@@ -117,18 +117,6 @@ function MobileMenu() {
       {createPortal(panel, document.body)}
     </>
   );
-          <nav className="flex flex-col p-4 gap-2 text-text">
-            <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Home</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Pokédex</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Catch Tracker</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/collection" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Collection</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Team Builder</NavLink>
-            <NavLink onClick={() => setOpen(false)} to="/settings" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Settings</NavLink>
-          </nav>
-        </aside>
-      </div>
-    </>
-  );
 }
 
 function Tab({ to, end, children }: { to: string; end?: boolean; children: React.ReactNode }) {
