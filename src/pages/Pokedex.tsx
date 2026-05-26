@@ -193,7 +193,7 @@ export function PokedexPage() {
       {/* Sticky just below the nav (Layout header is h-14). z-20 keeps it above
           the grid but below the global header (z-30). The card has a fully
           opaque background so cards scrolling underneath aren't visible. */}
-      <div className="card p-5 space-y-4 sticky top-14 z-20">
+      <div className="card p-4 sm:p-5 space-y-3 sticky top-14 z-20">
         {/* Search mode toggle */}
         <div className="inline-flex bg-bg-elev rounded-lg border border-line text-sm overflow-hidden">
           {(['name', 'ability', 'move'] as const).map((m) => (
@@ -274,13 +274,13 @@ export function PokedexPage() {
           onModeChange={setTypeMode}
         />
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             {searchMode === 'name' && (
               <button
                 type="button"
                 onClick={() => setShowEvoLine((x) => !x)}
                 className={clsx(
-                  'btn text-xs',
+                  'btn text-xs w-full sm:w-auto',
                   showEvoLine && 'btn-primary',
                 )}
                 title="When ON, search results expand to include each match's full evolution line"
@@ -293,7 +293,7 @@ export function PokedexPage() {
               type="button"
               onClick={() => setFavoritesOnly((x) => !x)}
               className={clsx(
-                'btn text-xs',
+                'btn text-xs w-full sm:w-auto',
                 favoritesOnly && 'btn-primary',
               )}
               title="Show only Pokémon you've favorited"
@@ -462,7 +462,7 @@ function DexCard({
       onTouchStart={prefetch}
       onPointerDown={prefetch}
       className={clsx(
-        'card p-3 group hover:border-accent/40 hover:bg-bg-hover transition-colors text-center relative',
+        'card p-2 sm:p-3 group hover:border-accent/40 hover:bg-bg-hover transition-colors text-center relative',
         isEvoRelative && 'opacity-80 border-dashed',
       )}
     >
@@ -478,7 +478,7 @@ function DexCard({
         <Sprite
           id={id}
           name={name}
-          size={120}
+          size={96}
           className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
         />
       </div>

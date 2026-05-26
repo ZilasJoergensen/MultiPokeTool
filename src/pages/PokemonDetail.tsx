@@ -142,13 +142,13 @@ export function PokemonDetailPage() {
           primary && isValidType(primary) && `before:absolute before:inset-0 before:opacity-20 before:bg-type-${primary}`,
         )}
       >
-        <div className="relative grid md:grid-cols-[260px,1fr] gap-6 p-6">
-          <div className="flex flex-col items-center gap-3">
+        <div className="relative grid md:grid-cols-[260px,1fr] gap-4 p-4 sm:p-6">
+          <div className="flex flex-col items-center gap-2">
             {/* Sprite container is always present; HeroSprite fades the <img>
                 in once the image has loaded (or instantly if already cached). */}
-            <div className="w-full aspect-square bg-bg-elev/60 rounded-xl grid place-items-center p-3">
+            <div className="w-full aspect-square bg-bg-elev/60 rounded-xl grid place-items-center p-2 sm:p-3">
               {spriteId > 0 && (
-                <HeroSprite id={spriteId} name={p?.name ?? key} shiny={shiny} />
+                <HeroSprite id={spriteId} name={p?.name ?? key} shiny={shiny} size={96} />
               )}
             </div>
             {p && (
@@ -183,13 +183,13 @@ export function PokemonDetailPage() {
               )}
             </div>
             {/* Name — reserve heading height so content below doesn't jump. */}
-            <div className="min-h-[3rem]">
+            <div className="min-h-[2.25rem] sm:min-h-[3rem]">
               {p && (
                 <h1 className="text-4xl font-extrabold tracking-tight">{prettyName(p.name)}</h1>
               )}
             </div>
             {/* Type badges — reserve badge-row height. */}
-            <div className="flex gap-2 flex-wrap min-h-[2rem]">
+            <div className="flex gap-2 flex-wrap min-h-[1.4rem] sm:min-h-[2rem]">
               {types.map((t) => (
                 <TypeBadge key={t} type={t} size="lg" />
               ))}

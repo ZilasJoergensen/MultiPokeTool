@@ -115,3 +115,13 @@
     font-size: 0.75rem !important;
   }
 }
+
+/* Pokemon detail specific mobile tweaks */
+@media (max-width: 639px) {
+  .card h1 {
+    font-size: 1.4rem;
+  }
+  .card .text-4xl {
+    font-size: 1.4rem;
+  }
+}
