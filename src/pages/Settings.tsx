@@ -27,70 +27,100 @@ const SETTINGS_SECTIONS: { id: SettingSection; label: string }[] = [
 export function SettingsPage() {
   const [prefs] = useStoreValue(getPrefs, ['prefs']);
   const [activeSection, setActiveSection] = useState<SettingSection>('general');
+  const [showPanel, setShowPanel] = useState(false);
 
   const handleUpdatePrefs = async (patch: Partial<UserPrefs>) => {
     await updatePrefs(patch);
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:gap-6 min-h-[calc(100vh-120px)]">
-      {/* ── Mobile Tabs (hidden on md+) ────────────────────────────────────────── */}
-      <div className="md:hidden overflow-x-auto border-b border-line/30 sticky top-0 bg-bg z-10">
-        <nav className="flex gap-1 px-2 py-2 min-w-max">
-          {SETTINGS_SECTIONS.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => setActiveSection(section.id)}
-              className={clsx(
-                'px-3 py-1.5 rounded text-sm whitespace-nowrap transition-colors',
-                activeSection === section.id
-                  ? 'bg-accent/20 text-text font-medium'
-                  : 'text-muted hover:text-text hover:bg-bg-hover',
-              )}
-            >
-              {section.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* ── Left Sidebar (hidden on mobile) ────────────────────────────────────────── */}
-      <div className="hidden md:block md:w-48 md:shrink-0">
-        <div className="md:sticky md:top-6 space-y-1">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted px-2 py-1">
-            Settings
-          </h2>
-          <nav className="space-y-0.5">
+    <div className="min-h-[calc(100vh-120px)]">
+      {/* ── MOBILE: Category List (shown when showPanel=false) ────────────────────── */}
+      {!showPanel && (
+        <div className="md:hidden">
+          <div className="space-y-1 px-2 py-4">
             {SETTINGS_SECTIONS.map((section) => (
               <button
                 key={section.id}
                 type="button"
-                onClick={() => setActiveSection(section.id)}
-                className={clsx(
-                  'w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors',
-                  activeSection === section.id
-                    ? 'bg-accent/20 text-text font-medium'
-                    : 'text-muted hover:text-text hover:bg-bg-hover',
-                )}
+                onClick={() => {
+                  setActiveSection(section.id);
+                  setShowPanel(true);
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-bg-elev hover:bg-bg-hover transition-colors text-left"
               >
-                {section.label}
+                <span className="text-sm font-medium">{section.label}</span>
+                <span className="text-muted">→</span>
               </button>
             ))}
-          </nav>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Content Area ────────────────────────────────────────── */}
-      <div className="md:flex-1 md:min-w-0 pb-12">
-        {activeSection === 'general' && <GeneralSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
-        {activeSection === 'games-dexes' && <GamesDexesSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
-        {activeSection === 'collection' && <CollectionSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
-        {activeSection === 'shiny-hunting' && <ShinyHuntingSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
-        {activeSection === 'team-builder' && <TeamBuilderSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
-        {activeSection === 'data-backup' && <DataBackupSection prefs={prefs} />}
-        {activeSection === 'advanced' && <AdvancedSection />}
-        {activeSection === 'about' && <AboutSection />}
+      {/* ── MOBILE: Full-width Panel (shown when showPanel=true) ────────────────────── */}
+      {showPanel && (
+        <div className="md:hidden pb-12">
+          <div className="px-2 py-3 border-b border-line/30">
+            <button
+              type="button"
+              onClick={() => setShowPanel(false)}
+              className="flex items-center gap-2 text-accent hover:text-accent-hover transition-colors text-sm font-medium"
+            >
+              ← Settings
+            </button>
+          </div>
+          <div className="px-2 py-4">
+            {activeSection === 'general' && <GeneralSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+            {activeSection === 'games-dexes' && <GamesDexesSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+            {activeSection === 'collection' && <CollectionSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+            {activeSection === 'shiny-hunting' && <ShinyHuntingSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+            {activeSection === 'team-builder' && <TeamBuilderSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+            {activeSection === 'data-backup' && <DataBackupSection prefs={prefs} />}
+            {activeSection === 'advanced' && <AdvancedSection />}
+            {activeSection === 'about' && <AboutSection />}
+          </div>
+        </div>
+      )}
+
+      {/* ── DESKTOP: Sidebar + Content (shown on md+) ────────────────────────────── */}
+      <div className="hidden md:flex md:gap-6 min-h-[calc(100vh-120px)]">
+        {/* Left Sidebar */}
+        <div className="md:w-48 md:shrink-0">
+          <div className="md:sticky md:top-6 space-y-1">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted px-2 py-1">
+              Settings
+            </h2>
+            <nav className="space-y-0.5">
+              {SETTINGS_SECTIONS.map((section) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => setActiveSection(section.id)}
+                  className={clsx(
+                    'w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors',
+                    activeSection === section.id
+                      ? 'bg-accent/20 text-text font-medium'
+                      : 'text-muted hover:text-text hover:bg-bg-hover',
+                  )}
+                >
+                  {section.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="md:flex-1 md:min-w-0 pb-12">
+          {activeSection === 'general' && <GeneralSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+          {activeSection === 'games-dexes' && <GamesDexesSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+          {activeSection === 'collection' && <CollectionSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+          {activeSection === 'shiny-hunting' && <ShinyHuntingSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+          {activeSection === 'team-builder' && <TeamBuilderSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+          {activeSection === 'data-backup' && <DataBackupSection prefs={prefs} />}
+          {activeSection === 'advanced' && <AdvancedSection />}
+          {activeSection === 'about' && <AboutSection />}
+        </div>
       </div>
     </div>
   );
@@ -102,13 +132,13 @@ export function SettingsPage() {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h1 className="text-2xl font-bold mb-2">{children}</h1>
+    <h1 className="text-xl sm:text-2xl font-bold mb-2">{children}</h1>
   );
 }
 
 function SectionDescription({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-sm text-muted mb-6">{children}</p>
+    <p className="text-xs sm:text-sm text-muted mb-6">{children}</p>
   );
 }
 

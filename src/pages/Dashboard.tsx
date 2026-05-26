@@ -226,9 +226,9 @@ export function DashboardPage() {
         <div className="grid md:grid-cols-2 gap-4">
           {/* Catch progress */}
           <div>
-            <SectionHeader title="Catch Progress" linkTo="/catch-tracker" linkLabel="Open tracker →" />
+            <SectionHeader title="Catch Progress" linkTo="/catch-tracker" linkLabel={ownedGroups.length > 3 ? "View all →" : "Open tracker →"} />
             <div className="card divide-y divide-line/50">
-              {ownedGroups.map((g) => {
+              {ownedGroups.slice(0, 3).map((g) => {
                 const caught = catchCountByGame[g.id] ?? 0;
                 const total = regionalDexSizes[g.id] ?? 0;
                 const pct = total > 0 ? (caught / total) * 100 : 0;

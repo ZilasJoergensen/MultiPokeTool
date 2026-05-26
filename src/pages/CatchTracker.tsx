@@ -200,26 +200,19 @@ export function CatchTrackerPage() {
 
   return (
     <div className="space-y-4">
-      {/* Game tabs */}
+      {/* Game selector dropdown */}
       <div className="card p-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+        <select
+          value={selectedId}
+          onChange={(e) => selectGame(e.target.value)}
+          className="input w-full"
+        >
           {ownedGroups.map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              onClick={() => selectGame(g.id)}
-              title={g.label}
-              className={clsx(
-                'px-3 py-1.5 rounded-lg text-sm font-medium shrink-0 transition-colors',
-                g.id === selectedId
-                  ? 'bg-accent text-white shadow-card'
-                  : 'bg-bg-elev text-muted hover:text-text',
-              )}
-            >
-              {g.short}
-            </button>
+            <option key={g.id} value={g.id}>
+              {g.label}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Stats bar */}

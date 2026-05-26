@@ -41,6 +41,7 @@ export function PokemonDetailPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('overview');
   const [shiny, setShiny] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [prefs] = useStoreValue(getPrefs, ['prefs']);
   const ownedGameGroupIds = useMemo(() => {
     if (!prefs) return [];
@@ -266,19 +267,57 @@ export function PokemonDetailPage() {
       {/* Tabs — always rendered so their position is stable. Content area
           gets a min-height to prevent the page from collapsing on cold visits
           while the pokemon query is in-flight. */}
-      <div className="border-b border-line flex gap-1 overflow-x-auto scroll-thin">
-        {(['overview', 'stats', 'moves', 'evolution', 'locations', 'breeding', 'matchups'] as Tab[]).map(
-          (t) => (
+      <div className="border-b border-line relative">
+        <div className="flex gap-1 overflow-x-auto scroll-thin">
+          {(['overview', 'stats', 'moves'] as Tab[]).map(
+            (t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => {
+                  setTab(t);
+                  setShowMoreMenu(false);
+                }}
+                className={clsx('tab-btn whitespace-nowrap', tab === t && 'active')}
+              >
+                {titleCase(t)}
+              </button>
+            ),
+          )}
+          {/* More dropdown button */}
+          <div className="relative">
             <button
-              key={t}
               type="button"
-              onClick={() => setTab(t)}
-              className={clsx('tab-btn whitespace-nowrap', tab === t && 'active')}
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className={clsx('tab-btn whitespace-nowrap', showMoreMenu && 'active')}
             >
-              {titleCase(t)}
+              More ↓
             </button>
-          ),
-        )}
+            {/* Dropdown menu */}
+            {showMoreMenu && (
+              <div className="absolute top-full left-0 mt-0 bg-bg-elev border border-line rounded-lg shadow-lg z-20 min-w-[140px]">
+                {(['evolution', 'locations', 'breeding', 'matchups'] as Tab[]).map(
+                  (t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        setTab(t);
+                        setShowMoreMenu(false);
+                      }}
+                      className={clsx(
+                        'block w-full text-left px-4 py-2 text-sm hover:bg-bg-hover transition-colors',
+                        tab === t && 'bg-accent/20 text-accent font-medium',
+                      )}
+                    >
+                      {titleCase(t)}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="min-h-[200px]">
