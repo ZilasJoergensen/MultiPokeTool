@@ -1,73 +1,152 @@
-# React + TypeScript + Vite
+# Pokédex Multi-Tool
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## ⚠️ AI-Generated for Personal Use Only
 
-Currently, two official plugins are available:
+**This project was written entirely by Claude AI (Anthropic) and is intended for personal use only.** It is not an official Pokémon application and has no affiliation with The Pokémon Company, Game Freak, or Nintendo.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Overview
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Pokédex Multi-Tool** is a web-based utility for Pokémon enthusiasts that combines several useful tools into one application:
 
-## Expanding the ESLint configuration
+### Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Pokédex Browser** - Browse and search all Pokémon with detailed stats, types, abilities, and evolution chains
+- **Regional Dex Tracker** - Track your progress catching Pokémon for each game's regional Pokédex (Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar, Paldea, and more)
+- **Collection Manager** - Organize your personal collection with support for different forms and shiny variants
+- **Shiny Hunt Assistant** - Track shiny hunting progress with encounter counts and method tracking
+- **Team Builder** - Build competitive Pokémon teams with EV/IV optimization, type coverage analysis, and format compliance (standard/champions)
+- **Damage Calculator** - Calculate battle damage and analyze type matchups
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Key Technologies
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Frontend**: React 19 with TypeScript
+- **Routing**: React Router v7
+- **State Management**: React Query (TanStack Query) with localStorage persistence
+- **Database**: IndexedDB for offline data storage
+- **Styling**: Tailwind CSS
+- **Data Source**: [PokéAPI](https://pokeapi.co/) (free, open-source Pokémon data API)
+- **Build Tool**: Vite
+- **Deployment**: Vercel
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or pnpm
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/pokedex.git
+cd pokedex
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will be available at `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Technical Highlights
+
+### Offline-First Architecture
+- Regional Pokédex data is cached and persisted using React Query + localStorage
+- All user data (catches, teams, hunts) stored in IndexedDB for offline access
+- Progressive Web App (PWA) support with service workers
+
+### Regional Dex Smart Caching
+- Intelligent handling of multi-dex games (e.g., Pokémon X/Y has 3 regional dexes that are merged)
+- Automatic deduplication of dex data across games
+- Preloading of owned game dexes on startup for instant access
+
+### Type Safety
+- Full TypeScript with strict mode enabled
+- Proper type annotations throughout
+- Integration with @tanstack/react-query for type-safe API queries
+
+---
+
+## Data & Privacy
+
+- **All data is stored locally** on your device (browser storage only)
+- **No data is sent to external servers** except to PokéAPI for Pokémon data
+- **No analytics, tracking, or telemetry**
+- Your catches, teams, and hunts exist only on your device
+
+---
+
+## Project Status
+
+**Personal Use Development** - This is an active hobby project. Features and performance may change. There are no guarantees of stability or future support.
+
+### Known Limitations
+
+- **Mobile support is limited** (desktop-first design)
+- **No cloud sync** between devices
+- **No user accounts** (data is device-local only)
+- Some pages may have extensive parameters that could benefit from simplification
+
+---
+
+## Legal Notice
+
+This project is **not endorsed by or affiliated with**:
+- The Pokémon Company
+- Game Freak
+- Nintendo
+- Any official Pokémon services
+
+Pokémon is a trademark of The Pokémon Company. All Pokémon data used comes from [PokéAPI](https://pokeapi.co/) under the [CC0 license](https://creativecommons.org/publicdomain/zero/1.0/).
+
+This tool is **for personal, non-commercial use only**. Do not use it for:
+- Commercial purposes
+- Public distribution
+- Competitive gaming registration
+- Any official Pokémon services
+
+---
+
+## Disclaimer
+
+⚠️ **Generated by AI**: This entire codebase was written by Claude AI (Anthropic). While tested and functional, it may contain bugs, inefficiencies, or architectural decisions that differ from professional standards.
+
+**No Warranty**: This software is provided "as-is" without any warranty. Use at your own risk.
+
+**For Personal Use Only**: This tool is designed exclusively for personal Pokémon tracking and team building. It is not suitable for official tournaments or competitive play registration.
+
+---
+
+## Data Sources
+
+- **Pokémon Data**: [PokéAPI](https://pokeapi.co/) - Free, open-source REST API
+- **Type Matchups**: Generated from official Pokémon type effectiveness charts
+- **Stats & Abilities**: From official game data via PokéAPI
+
+---
+
+## Attribution
+
+- **Built by**: Claude AI (Anthropic)
+- **Data**: PokéAPI contributors
+- **Design**: Custom with Tailwind CSS
+
+---
+
+**Last Updated**: May 2026  
+**Version**: 0.1.0 (Beta)  
+**License**: Personal Use Only
