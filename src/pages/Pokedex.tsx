@@ -55,6 +55,16 @@ export function PokedexPage() {
   // The picked ability/move once the user selects one from the autocomplete.
   const [pickedAbility, setPickedAbility] = useState<string | null>(null);
   const [pickedMove, setPickedMove] = useState<string | null>(null);
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      setShowTop(window.scrollY > 300);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Fetch the id-set for each selected type. /type/{name} returns ALL pokemon
   // of that type — much cheaper than fetching 1025 detail records. We intersect
@@ -190,135 +200,139 @@ export function PokedexPage() {
 
   return (
     <div className="space-y-6">
-      {/* Sticky just below the nav (Layout header is h-14). z-20 keeps it above
-          the grid but below the global header (z-30). The card has a fully
-          opaque background so cards scrolling underneath aren't visible. */}
-      <div className="card p-4 sm:p-5 space-y-3 sticky top-14 z-20">
-        {/* Search mode toggle */}
-        <div className="inline-flex bg-bg-elev rounded-lg border border-line text-sm overflow-hidden">
-          {(['name', 'ability', 'move'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => {
-                setSearchMode(m);
-                setQ('');
-                if (m !== 'ability') setPickedAbility(null);
-                if (m !== 'move') setPickedMove(null);
-              }}
-              className={clsx(
-                'px-4 py-1.5 capitalize transition-colors',
-                searchMode === m ? 'bg-accent text-white' : 'text-muted hover:text-text',
-              )}
+      {/* Card with only the search controls sticky */}
+      <div className="card p-4 sm:p-5">
+        <div className="sticky top-14 z-20 bg-bg-card/90 -mx-4 sm:mx-0 p-4 sm:p-0">
+          {/* Search mode toggle */}
+          <div className="inline-flex bg-bg-elev rounded-lg border border-line text-sm overflow-hidden">
+            {(['name', 'ability', 'move'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => {
+                  setSearchMode(m);
+                  setQ('');
+                  if (m !== 'ability') setPickedAbility(null);
+                  if (m !== 'move') setPickedMove(null);
+                }}
+                className={clsx(
+                  'px-4 py-1.5 capitalize transition-colors',
+                  searchMode === m ? 'bg-accent text-white' : 'text-muted hover:text-text',
+                )}
+              >
+                {m === 'name' ? 'By Name' : `By ${m}`}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3 md:items-start mt-3">
+            {searchMode === 'name' ? (
+              <div className="relative flex-1">
+                <input
+                  className="input w-full pl-9"
+                  placeholder="Search by name or #0025…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+                <svg
+                  className="absolute left-3 top-2.5 w-4 h-4 text-muted"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </div>
+            ) : (
+              <SkillPicker
+                kind={searchMode}
+                all={
+                  searchMode === 'ability'
+                    ? abilityIndexQ.data ?? []
+                    : moveIndexQ.data ?? []
+                }
+                loading={searchMode === 'ability' ? abilityIndexQ.isLoading : moveIndexQ.isLoading}
+                picked={searchMode === 'ability' ? pickedAbility : pickedMove}
+                onPick={(name) => {
+                  if (searchMode === 'ability') setPickedAbility(name);
+                  else setPickedMove(name);
+                }}
+                onClear={() => {
+                  if (searchMode === 'ability') setPickedAbility(null);
+                  else setPickedMove(null);
+                }}
+              />
+            )}
+            <select
+              className="input min-w-[200px]"
+              value={gen}
+              onChange={(e) => setGen(e.target.value === 'all' ? 'all' : Number(e.target.value))}
             >
-              {m === 'name' ? 'By Name' : `By ${m}`}
-            </button>
-          ))}
+              <option value="all">All Generations</option>
+              {GENERATIONS.map((g, i) => (
+                <option key={i} value={i}>{g.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-3 md:items-start">
-          {searchMode === 'name' ? (
-            <div className="relative flex-1">
-              <input
-                className="input w-full pl-9"
-                placeholder="Search by name or #0025…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-              <svg
-                className="absolute left-3 top-2.5 w-4 h-4 text-muted"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </div>
-          ) : (
-            <SkillPicker
-              kind={searchMode}
-              all={
-                searchMode === 'ability'
-                  ? abilityIndexQ.data ?? []
-                  : moveIndexQ.data ?? []
-              }
-              loading={searchMode === 'ability' ? abilityIndexQ.isLoading : moveIndexQ.isLoading}
-              picked={searchMode === 'ability' ? pickedAbility : pickedMove}
-              onPick={(name) => {
-                if (searchMode === 'ability') setPickedAbility(name);
-                else setPickedMove(name);
-              }}
-              onClear={() => {
-                if (searchMode === 'ability') setPickedAbility(null);
-                else setPickedMove(null);
-              }}
-            />
-          )}
-          <select
-            className="input min-w-[200px]"
-            value={gen}
-            onChange={(e) => setGen(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-          >
-            <option value="all">All Generations</option>
-            {GENERATIONS.map((g, i) => (
-              <option key={i} value={i}>{g.label}</option>
-            ))}
-          </select>
-        </div>
-        <TypeFilter
-          selected={typeFilter}
-          onChange={setTypeFilter}
-          mode={typeMode}
-          onModeChange={setTypeMode}
-        />
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {searchMode === 'name' && (
+        {/* Non-sticky controls */}
+        <div className="mt-4">
+          <TypeFilter
+            selected={typeFilter}
+            onChange={setTypeFilter}
+            mode={typeMode}
+            onModeChange={setTypeMode}
+          />
+          <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              {searchMode === 'name' && (
+                <button
+                  type="button"
+                  onClick={() => setShowEvoLine((x) => !x)}
+                  className={clsx(
+                    'btn text-xs w-full sm:w-auto',
+                    showEvoLine && 'btn-primary',
+                  )}
+                  title="When ON, search results expand to include each match's full evolution line"
+                >
+                  <span aria-hidden>🧬</span>
+                  Show Evolution Line {showEvoLine ? 'ON' : 'OFF'}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setShowEvoLine((x) => !x)}
+                onClick={() => setFavoritesOnly((x) => !x)}
                 className={clsx(
                   'btn text-xs w-full sm:w-auto',
-                  showEvoLine && 'btn-primary',
+                  favoritesOnly && 'btn-primary',
                 )}
-                title="When ON, search results expand to include each match's full evolution line"
+                title="Show only Pokémon you've favorited"
               >
-                <span aria-hidden>🧬</span>
-                Show Evolution Line {showEvoLine ? 'ON' : 'OFF'}
+                <span aria-hidden>{favoritesOnly ? '★' : '☆'}</span>
+                Favorites {favIds.size > 0 && `(${favIds.size})`}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setFavoritesOnly((x) => !x)}
-              className={clsx(
-                'btn text-xs w-full sm:w-auto',
-                favoritesOnly && 'btn-primary',
-              )}
-              title="Show only Pokémon you've favorited"
-            >
-              <span aria-hidden>{favoritesOnly ? '★' : '☆'}</span>
-              Favorites {favIds.size > 0 && `(${favIds.size})`}
-            </button>
+            </div>
+            <div className="text-xs text-muted">
+              {isLoading
+                ? 'Loading dex…'
+                : typesLoading
+                  ? 'Filtering by type…'
+                  : evoLoading
+                    ? 'Expanding evolution lines…'
+                    : evoActive
+                      ? `${expanded.length.toLocaleString()} Pokémon (incl. evolutions)`
+                      : `${filtered.length.toLocaleString()} Pokémon`}
+            </div>
           </div>
-          <div className="text-xs text-muted">
-            {isLoading
-              ? 'Loading dex…'
-              : typesLoading
-                ? 'Filtering by type…'
-                : evoLoading
-                  ? 'Expanding evolution lines…'
-                  : evoActive
-                    ? `${expanded.length.toLocaleString()} Pokémon (incl. evolutions)`
-                    : `${filtered.length.toLocaleString()} Pokémon`}
-          </div>
+          {showEvoLine && q.trim() && filtered.length > 40 && (
+            <div className="text-[11px] text-yellow-400/80 mt-2">
+              Evolution expansion paused — too many matches ({filtered.length}). Narrow your search to under 40.
+            </div>
+          )}
         </div>
-        {showEvoLine && q.trim() && filtered.length > 40 && (
-          <div className="text-[11px] text-yellow-400/80">
-            Evolution expansion paused — too many matches ({filtered.length}). Narrow your search to under 40.
-          </div>
-        )}
       </div>
 
       <RecentlyViewedRail />
@@ -338,6 +352,15 @@ export function PokedexPage() {
         </div>
       )}
     </div>
+    {showTop && (
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Scroll to top"
+        className="fixed bottom-6 right-4 sm:right-8 z-50 bg-bg-elev hover:bg-bg-hover p-3 rounded-full shadow-card"
+      >
+        ↑
+      </button>
+    )}
   );
 }
 
