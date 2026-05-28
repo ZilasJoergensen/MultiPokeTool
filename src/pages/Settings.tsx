@@ -33,10 +33,31 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="flex gap-6 min-h-[calc(100vh-120px)]">
-      {/* ── Left Sidebar ────────────────────────────────────────── */}
-      <div className="w-48 shrink-0">
-        <div className="sticky top-6 space-y-1">
+    <div className="flex flex-col md:flex-row md:gap-6 min-h-[calc(100vh-120px)]">
+      {/* ── Mobile Tabs (hidden on md+) ────────────────────────────────────────── */}
+      <div className="md:hidden overflow-x-auto border-b border-line/30 sticky top-0 bg-bg z-10">
+        <nav className="flex gap-1 px-2 py-2 min-w-max">
+          {SETTINGS_SECTIONS.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() => setActiveSection(section.id)}
+              className={clsx(
+                'px-3 py-1.5 rounded text-sm whitespace-nowrap transition-colors',
+                activeSection === section.id
+                  ? 'bg-accent/20 text-text font-medium'
+                  : 'text-muted hover:text-text hover:bg-bg-hover',
+              )}
+            >
+              {section.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* ── Left Sidebar (hidden on mobile) ────────────────────────────────────────── */}
+      <div className="hidden md:block md:w-48 md:shrink-0">
+        <div className="md:sticky md:top-6 space-y-1">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted px-2 py-1">
             Settings
           </h2>
@@ -61,7 +82,7 @@ export function SettingsPage() {
       </div>
 
       {/* ── Content Area ────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0 pb-12">
+      <div className="md:flex-1 md:min-w-0 pb-12">
         {activeSection === 'general' && <GeneralSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
         {activeSection === 'games-dexes' && <GamesDexesSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
         {activeSection === 'storage' && <StorageSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
