@@ -9,7 +9,7 @@ import { subscribeStore } from './store';
  */
 export function useStoreValue<T>(
   fetcher: () => Promise<T>,
-  watch: ('prefs' | 'favorites' | 'recent' | 'catches' | 'shinyHunts' | 'collection')[],
+  watch: ('prefs' | 'favorites' | 'recent' | 'gameDexes' | 'shinyHunts' | 'storage')[],
 ): [T | undefined, () => void] {
   const [value, setValue] = useState<T | undefined>(undefined);
   const [tick, setTick] = useState(0);

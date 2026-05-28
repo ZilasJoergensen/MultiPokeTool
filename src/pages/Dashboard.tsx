@@ -658,7 +658,7 @@ function GetStartedCard({ hasOwnedGames }: { hasOwnedGames: boolean }) {
         {!hasOwnedGames && (
           <Link to="/settings" className="btn btn-primary">Select your games →</Link>
         )}
-        <Link to="/catch-tracker" className="btn">Start catching</Link>
+        <Link to="/game-dexes" className="btn">Start catching</Link>
         <Link to="/shiny-hunter" className="btn">Start a shiny hunt</Link>
         <Link to="/pokedex" className="btn">Browse the Pokédex</Link>
       </div>

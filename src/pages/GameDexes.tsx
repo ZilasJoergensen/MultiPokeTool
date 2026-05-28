@@ -630,7 +630,7 @@ export function GameDexesPage() {
           <button
             type="button"
             className="w-full text-left px-3 py-2 rounded text-sm hover:bg-bg-hover transition"
-            onClick={handleOpenMoveToStorage}
+            onClick={() => handleOpenMoveToStorage()}
           >
             Move to Storage
           </button>

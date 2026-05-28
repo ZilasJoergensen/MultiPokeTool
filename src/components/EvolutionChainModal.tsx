@@ -102,7 +102,6 @@ export function EvolutionChainModal({
     );
   }
 
-  const currentStage = stages[currentIndex];
   const availableEvolutions = stages.slice(currentIndex + 1);
 
   const handleSelectEvolution = async (evolution: Stage) => {
@@ -154,7 +153,7 @@ export function EvolutionChainModal({
         {/* Evolution options */}
         <div className="space-y-2">
           <p className="text-xs text-muted">Evolve into:</p>
-          {availableEvolutions.map((evo, idx) => {
+          {availableEvolutions.map((evo) => {
             const condition = evoConditionsLabel(evo.details);
             return (
               <button

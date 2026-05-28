@@ -6,11 +6,11 @@ import { prettyName, padId } from '../lib/utils';
 import { GAME_GROUPS } from '../lib/games';
 import { api, idFromUrl } from '../lib/api';
 import {
-  listCollection,
-  addToCollection,
-  updateCollected,
-  removeFromCollection,
-  type CollectedPokemon,
+  listStorage,
+  addToStorage,
+  updateStored,
+  removeFromStorage,
+  type StoredPokemon,
 } from '../lib/store';
 import { useStoreValue } from '../lib/use-store';
 
@@ -44,7 +44,7 @@ type PokemonRef = { id: number; name: string };
 // ---------------------------------------------------------------------------
 
 export function CollectionPage() {
-  const [collection, refetch] = useStoreValue(listCollection, ['collection']);
+  const [collection, refetch] = useStoreValue(listStorage, ['storage']);
 
   const { data: pokemonIndex } = useQuery({
     queryKey: ['pokemon-index'],
@@ -64,7 +64,7 @@ export function CollectionPage() {
 
   // null = modal closed; PokemonRef with id=0 = add with blank picker
   const [addTarget, setAddTarget] = useState<PokemonRef | null>(null);
-  const [editTarget, setEditTarget] = useState<CollectedPokemon | null>(null);
+  const [editTarget, setEditTarget] = useState<StoredPokemon | null>(null);
 
   const stats = useMemo(() => {
     const items = collection ?? [];
@@ -91,20 +91,20 @@ export function CollectionPage() {
     return items;
   }, [collection, shinyOnly, gameFilter, searchQ]);
 
-  async function handleAdd(draft: Omit<CollectedPokemon, 'id' | 'addedAt' | 'updatedAt'>) {
-    await addToCollection(draft);
+  async function handleAdd(draft: Omit<StoredPokemon, 'id' | 'addedAt' | 'updatedAt'>) {
+    await addToStorage(draft);
     refetch();
     setAddTarget(null);
   }
 
-  async function handleUpdate(id: string, patch: Partial<CollectedPokemon>) {
-    await updateCollected(id, patch);
+  async function handleUpdate(id: string, patch: Partial<StoredPokemon>) {
+    await updateStored(id, patch);
     refetch();
     setEditTarget(null);
   }
 
   async function handleDelete(id: string) {
-    await removeFromCollection(id);
+    await removeFromStorage(id);
     refetch();
     setEditTarget(null);
   }
@@ -241,7 +241,7 @@ export function CollectionPage() {
 // CollectionCard
 // ---------------------------------------------------------------------------
 
-function CollectionCard({ entry, onClick }: { entry: CollectedPokemon; onClick: () => void }) {
+function CollectionCard({ entry, onClick }: { entry: StoredPokemon; onClick: () => void }) {
   const game = GAME_GROUPS.find((g) => g.id === entry.originGame);
   return (
     <button
@@ -334,7 +334,7 @@ function LivingDexView({
 // Entry modal (add + edit)
 // ---------------------------------------------------------------------------
 
-type EntryDraft = Omit<CollectedPokemon, 'id' | 'addedAt' | 'updatedAt'>;
+type EntryDraft = Omit<StoredPokemon, 'id' | 'addedAt' | 'updatedAt'>;
 
 function EntryModal({
   mode,
@@ -346,7 +346,7 @@ function EntryModal({
   onDelete,
 }: {
   mode: 'add' | 'edit';
-  entry?: CollectedPokemon;
+  entry?: StoredPokemon;
   preselected?: PokemonRef | null;
   pokemonIndex?: PokemonRef[];
   onClose: () => void;

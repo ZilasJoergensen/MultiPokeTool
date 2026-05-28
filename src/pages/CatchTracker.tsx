@@ -9,10 +9,10 @@ import { padId, prettyName } from '../lib/utils';
 import { GAME_GROUPS, type GameGroup } from '../lib/games';
 import {
   getPrefs,
-  listCatchesForGame,
-  setCatch,
-  clearCatch,
-  type CatchStatus,
+  listGameDexForGame,
+  setGameDexStatus,
+  clearGameDex,
+  type GameDexStatus,
 } from '../lib/store';
 import { useStoreValue } from '../lib/use-store';
 import { regionalDexQueryKey, fetchGameDex, getDexIds } from '../lib/regional-dex';
@@ -38,7 +38,7 @@ const DEX_NAMES: Record<string, string> = {
   sv:   'Paldea Pokédex',
 };
 
-type StatusFilter = 'all' | 'missing' | 'seen' | 'caught';
+type StatusFilter = 'all' | 'missing' | 'registered' | 'in_game';
 
 interface IndexedPokemon {
   id: number;
@@ -99,8 +99,8 @@ export function CatchTrackerPage() {
   const dexName = selectedId ? (DEX_NAMES[selectedId] ?? 'Regional Pokédex') : null;
 
   // Catch map for selected game: pokemonId → status
-  const [catchMap, setCatchMap] = useState<Map<number, CatchStatus>>(new Map());
-  const [catchesLoading, setCatchesLoading] = useState(false);
+  const [catchMap, setGameDexStatusMap] = useState<Map<number, GameDexStatus>>(new Map());
+  const [catchesLoading, setGameDexStatusesLoading] = useState(false);
 
   // Responsive virtualization: measure container width to compute columns
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -121,10 +121,10 @@ export function CatchTrackerPage() {
 
   useEffect(() => {
     if (!selectedId) return;
-    setCatchesLoading(true);
-    listCatchesForGame(selectedId).then((records) => {
-      setCatchMap(new Map(records.map((r) => [r.pokemonId, r.status])));
-      setCatchesLoading(false);
+    setGameDexStatusesLoading(true);
+    listGameDexForGame(selectedId).then((records) => {
+      setGameDexStatusMap(new Map(records.map((r) => [r.pokemonId, r.status])));
+      setGameDexStatusesLoading(false);
     });
   }, [selectedId]);
 
@@ -136,8 +136,8 @@ export function CatchTrackerPage() {
       if (!regionalDexIdsSet.has(p.id)) return false;
       const status = catchMap.get(p.id);
       if (statusFilter === 'missing') return !status;
-      if (statusFilter === 'seen') return status === 'seen';
-      if (statusFilter === 'caught') return status === 'caught';
+      if (statusFilter === 'registered') return status === 'registered';
+      if (statusFilter === 'in_game') return status === 'in_game';
       return true;
     });
   }, [allPokemon, catchMap, regionalDexIdsSet, statusFilter]);
@@ -145,28 +145,28 @@ export function CatchTrackerPage() {
   // Stats are always scoped to the regional dex — consistent with what's in the grid
   const stats = useMemo(() => {
     let total = 0;
-    let caught = 0;
-    let seen = 0;
+    let inGame = 0;
+    let registered = 0;
     allPokemon?.forEach((p) => {
       if (!regionalDexIdsSet.has(p.id)) return;
       total++;
       const s = catchMap.get(p.id);
-      if (s === 'caught') caught++;
-      else if (s === 'seen') seen++;
+      if (s === 'in_game') inGame++;
+      else if (s === 'registered') registered++;
     });
-    return { total, caught, seen, missing: total - caught - seen };
+    return { total, inGame, registered, missing: total - inGame - registered };
   }, [allPokemon, catchMap, regionalDexIdsSet]);
 
   const toggleStatus = useCallback(
     async (p: IndexedPokemon) => {
       if (!selectedId) return;
       const current = catchMap.get(p.id);
-      // Cycle: none → caught → seen → none
-      const next: CatchStatus | null =
-        current === undefined ? 'caught' : current === 'caught' ? 'seen' : null;
+      // Cycle: missing → in_game → registered → missing
+      const next: GameDexStatus | null =
+        current === undefined || current === 'missing' ? 'in_game' : current === 'in_game' ? 'registered' : null;
 
       // Optimistic update
-      setCatchMap((m) => {
+      setGameDexStatusMap((m) => {
         const next2 = new Map(m);
         if (next === null) next2.delete(p.id);
         else next2.set(p.id, next);
@@ -174,8 +174,8 @@ export function CatchTrackerPage() {
       });
 
       // Persist
-      if (next === null) await clearCatch(selectedId, p.id);
-      else await setCatch(selectedId, p.id, p.name, next);
+      if (next === null) await clearGameDex(selectedId, p.id);
+      else await setGameDexStatus(selectedId, p.id, p.name, next);
     },
     [selectedId, catchMap],
   );
@@ -196,7 +196,7 @@ export function CatchTrackerPage() {
     );
   }
 
-  const pct = stats.total > 0 ? Math.round((stats.caught / stats.total) * 100) : 0;
+  const pct = stats.total > 0 ? Math.round((stats.inGame / stats.total) * 100) : 0;
 
   return (
     <div className="space-y-4">
@@ -230,7 +230,7 @@ export function CatchTrackerPage() {
               <div className="font-semibold text-base">{selectedGroup.label}</div>
               {dexName && <div className="text-xs text-muted mt-0.5">{dexName}</div>}
             </div>
-            <span className="text-muted tabular-nums">{pct}% caught</span>
+            <span className="text-muted tabular-nums">{pct}% in game</span>
           </div>
           <div className="h-2 bg-bg-elev rounded-full overflow-hidden">
             <div
@@ -239,8 +239,8 @@ export function CatchTrackerPage() {
             />
           </div>
           <div className="flex gap-4 text-xs text-muted">
-            <span className="text-green-400 font-medium">✓ {stats.caught} caught</span>
-            <span className="text-yellow-400 font-medium">◉ {stats.seen} seen</span>
+            <span className="text-green-400 font-medium">✓ {stats.inGame} in game</span>
+            <span className="text-yellow-400 font-medium">◉ {stats.registered} registered</span>
             <span>{stats.missing} missing</span>
             <span className="ml-auto">{stats.total} total</span>
           </div>
@@ -250,7 +250,7 @@ export function CatchTrackerPage() {
       {/* Filters */}
       <div className="flex items-center gap-2">
         <div className="flex gap-1 bg-bg-elev rounded-lg p-1">
-          {(['all', 'missing', 'seen', 'caught'] as StatusFilter[]).map((f) => (
+          {(['all', 'missing', 'registered', 'in_game'] as StatusFilter[]).map((f) => (
             <button
               key={f}
               type="button"
@@ -318,12 +318,12 @@ export function CatchTrackerPage() {
                             key={p.id}
                             type="button"
                             onClick={() => toggleStatus(p)}
-                            title={`${prettyName(p.name)} — click to mark caught, again for seen, again to clear`}
+                            title={`${prettyName(p.name)} — click to mark in game, again for registered, again to clear`}
                             className={clsx(
                               'card p-2 flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer select-none flex-1',
-                              status === 'caught'
+                              status === 'in_game'
                                 ? 'border-green-500/70 bg-green-500/10'
-                                : status === 'seen'
+                                : status === 'registered'
                                   ? 'border-yellow-500/70 bg-yellow-500/10'
                                   : 'opacity-50 hover:opacity-100',
                             )}
@@ -334,12 +334,12 @@ export function CatchTrackerPage() {
                                 <span
                                   className={clsx(
                                     'absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-bold grid place-items-center shadow-card',
-                                    status === 'caught'
+                                    status === 'in_game'
                                       ? 'bg-green-500 text-white'
                                       : 'bg-yellow-500 text-black',
                                   )}
                                 >
-                                  {status === 'caught' ? '✓' : '◉'}
+                                  {status === 'in_game' ? '✓' : '◉'}
                                 </span>
                               )}
                             </div>
@@ -364,12 +364,12 @@ export function CatchTrackerPage() {
                     key={p.id}
                     type="button"
                     onClick={() => toggleStatus(p)}
-                    title={`${prettyName(p.name)} — click to mark caught, again for seen, again to clear`}
+                    title={`${prettyName(p.name)} — click to mark in game, again for registered, again to clear`}
                     className={clsx(
                       'card p-2 flex flex-col items-center gap-0.5 text-center transition-all cursor-pointer select-none',
-                      status === 'caught'
+                      status === 'in_game'
                         ? 'border-green-500/70 bg-green-500/10'
-                        : status === 'seen'
+                        : status === 'registered'
                           ? 'border-yellow-500/70 bg-yellow-500/10'
                           : 'opacity-50 hover:opacity-100',
                     )}
@@ -380,12 +380,12 @@ export function CatchTrackerPage() {
                         <span
                           className={clsx(
                             'absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-bold grid place-items-center shadow-card',
-                            status === 'caught'
+                            status === 'in_game'
                               ? 'bg-green-500 text-white'
                               : 'bg-yellow-500 text-black',
                           )}
                         >
-                          {status === 'caught' ? '✓' : '◉'}
+                          {status === 'in_game' ? '✓' : '◉'}
                         </span>
                       )}
                     </div>

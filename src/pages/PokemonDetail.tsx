@@ -1484,11 +1484,11 @@ function PersonalStatusBar({
 }) {
   const [storageEntries] = useStoreValue(
     () => listStorageForPokemon(pokemonId),
-    ['collection'],
+    ['storage'],
   );
   const [gameDexRecords] = useStoreValue(
     () => listGameDexStatusForPokemon(pokemonId, ownedGameGroupIds),
-    ['catches'],
+    ['gameDexes'],
   );
   const [activeHunts] = useStoreValue(
     () => listActiveHunts().then((all) => all.filter((h) => h.targetPokemonId === pokemonId)),
@@ -1511,7 +1511,7 @@ function PersonalStatusBar({
     <div className="flex flex-wrap gap-1.5 text-xs mt-0.5">
       {owned > 0 && (
         <Link
-          to="/collection"
+          to="/storage"
           className="chip bg-green-500/15 border border-green-500/30 text-green-300 normal-case hover:bg-green-500/25 transition-colors"
         >
           {owned === 1 ? '1 owned' : `${owned} owned`}
@@ -1523,7 +1523,7 @@ function PersonalStatusBar({
         return group ? (
           <Link
             key={r.gameGroupId}
-            to="/catch-tracker"
+            to="/game-dexes"
             className="chip bg-accent/15 border border-accent/30 text-accent normal-case hover:bg-accent/25 transition-colors"
           >
             ✓ {group.short}
@@ -1577,11 +1577,11 @@ function QuickActions({
   const [fav] = useStoreValue(() => isFavorite(pokemonId), ['favorites']);
   const [storageEntries] = useStoreValue(
     () => listStorageForPokemon(pokemonId),
-    ['collection'],
+    ['storage'],
   );
   const [gameDexRecords, refetchGameDexes] = useStoreValue(
     () => listGameDexStatusForPokemon(pokemonId, ownedGameGroupIds),
-    ['catches'],
+    ['gameDexes'],
   );
 
   const inStorage = (storageEntries?.length ?? 0) > 0;
@@ -1676,7 +1676,7 @@ function QuickActions({
                   >
                     <span>{g.short}</span>
                     {status === 'in_game' && <span className="text-green-400 text-xs">✓ in game</span>}
-                    {status === 'seen' && <span className="text-yellow-400 text-xs">◉ seen</span>}
+                    {status === 'registered' && <span className="text-blue-400 text-xs">✔ registered</span>}
                     {!status && <span className="text-muted text-xs">—</span>}
                   </button>
                 );
