@@ -11,12 +11,12 @@ import {
 import { useStoreValue } from '../lib/use-store';
 import { GAME_GROUPS } from '../lib/games';
 
-type SettingSection = 'general' | 'games-dexes' | 'collection' | 'shiny-hunting' | 'team-builder' | 'data-backup' | 'advanced' | 'about';
+type SettingSection = 'general' | 'games-dexes' | 'storage' | 'shiny-hunting' | 'team-builder' | 'data-backup' | 'advanced' | 'about';
 
 const SETTINGS_SECTIONS: { id: SettingSection; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'games-dexes', label: 'Games & Dexes' },
-  { id: 'collection', label: 'Collection' },
+  { id: 'storage', label: 'Storage & Living Dex' },
   { id: 'shiny-hunting', label: 'Shiny Hunting' },
   { id: 'team-builder', label: 'Team Builder' },
   { id: 'data-backup', label: 'Data & Backup' },
@@ -64,7 +64,7 @@ export function SettingsPage() {
       <div className="flex-1 min-w-0 pb-12">
         {activeSection === 'general' && <GeneralSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
         {activeSection === 'games-dexes' && <GamesDexesSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
-        {activeSection === 'collection' && <CollectionSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
+        {activeSection === 'storage' && <StorageSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
         {activeSection === 'shiny-hunting' && <ShinyHuntingSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
         {activeSection === 'team-builder' && <TeamBuilderSection prefs={prefs} onUpdate={handleUpdatePrefs} />}
         {activeSection === 'data-backup' && <DataBackupSection prefs={prefs} />}
@@ -278,18 +278,18 @@ function GamesOwned({ ownedVersions, onUpdate }: { ownedVersions: string[]; onUp
 }
 
 // ---------------------------------------------------------------------------
-// Section: Collection
+// Section: Storage & Living Dex
 // ---------------------------------------------------------------------------
 
-function CollectionSection({ prefs, onUpdate }: { prefs: UserPrefs | undefined; onUpdate: (patch: Partial<UserPrefs>) => Promise<void> }) {
+function StorageSection({ prefs, onUpdate }: { prefs: UserPrefs | undefined; onUpdate: (patch: Partial<UserPrefs>) => Promise<void> }) {
   if (!prefs) return <div>Loading...</div>;
 
   return (
     <div className="max-w-lg space-y-6">
       <div>
-        <SectionTitle>Collection</SectionTitle>
+        <SectionTitle>Storage & Living Dex</SectionTitle>
         <SectionDescription>
-          How would you like to track your Pokémon collection?
+          Storage contains individual Pokémon you currently own. Living Dex slots are filled automatically from Storage entries only.
         </SectionDescription>
       </div>
 

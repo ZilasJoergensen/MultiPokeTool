@@ -9,15 +9,15 @@ import { Teams } from '../lib/teams';
 import {
   getPrefs,
   listActiveHunts,
-  listAllCatches,
+  listAllGameDexRecords,
   listRecent,
-  listCollection,
+  listStorage,
   listHunts,
   incrementEncounters,
   updateHunt,
   type ShinyHunt,
   type RecentView,
-  type CollectedPokemon,
+  type StoredPokemon,
 } from '../lib/store';
 import { useStoreValue } from '../lib/use-store';
 import { getGameDexPokemon } from '../lib/regional-dex';
@@ -58,9 +58,9 @@ export function DashboardPage() {
   const [prefs] = useStoreValue(getPrefs, ['prefs']);
   const [activeHunts, refetchHunts] = useStoreValue(listActiveHunts, ['shinyHunts']);
   const [allHunts] = useStoreValue(listHunts, ['shinyHunts']);
-  const [allCatches] = useStoreValue(listAllCatches, ['catches']);
+  const [allGameDexes] = useStoreValue(listAllGameDexRecords, ['gameDexes']);
   const [recent] = useStoreValue(listRecent, ['recent']);
-  const [collection] = useStoreValue(listCollection, ['collection']);
+  const [storage] = useStoreValue(listStorage, ['storage']);
   const [regionalDexSizes, setRegionalDexSizes] = useState<Record<string, number>>({});
 
   const hour = new Date().getHours();
@@ -90,23 +90,23 @@ export function DashboardPage() {
     });
   }, [ownedGroups]);
 
-  // Caught count per game (scoped to game's regional dex)
-  const catchCountByGame = useMemo(() => {
+  // Registered count per game (scoped to game's regional dex)
+  const registeredCountByGame = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const c of allCatches ?? []) {
-      if (c.status !== 'caught') continue;
-      map[c.gameGroupId] = (map[c.gameGroupId] ?? 0) + 1;
+    for (const g of allGameDexes ?? []) {
+      if (g.status === 'missing') continue;
+      map[g.gameGroupId] = (map[g.gameGroupId] ?? 0) + 1;
     }
     return map;
-  }, [allCatches]);
+  }, [allGameDexes]);
 
-  // Collection stats
-  const collectionStats = useMemo(() => {
-    const entries = collection ?? [];
+  // Storage stats
+  const storageStats = useMemo(() => {
+    const entries = storage ?? [];
     const uniqueSpecies = new Set(entries.map((e) => e.pokemonId)).size;
     const shinies = entries.filter((e) => e.shiny).length;
     return { total: entries.length, uniqueSpecies, shinies };
-  }, [collection]);
+  }, [storage]);
 
   const completedHunts = useMemo(
     () => (allHunts ?? []).filter((h) => h.status === 'completed'),
@@ -115,10 +115,10 @@ export function DashboardPage() {
 
   const teams = useMemo(() => Teams.list(), []);
 
-  // Recently caught (collection, newest first)
+  // Recently added to storage (newest first)
   const recentlyCaught = useMemo(
-    () => (collection ?? []).slice(0, 6),
-    [collection],
+    () => (storage ?? []).slice(0, 6),
+    [storage],
   );
 
   // Recently viewed (newest first, up to 6)
@@ -135,9 +135,9 @@ export function DashboardPage() {
 
   const hasAnyData =
     (activeHunts?.length ?? 0) > 0 ||
-    (allCatches?.length ?? 0) > 0 ||
+    (allGameDexes?.length ?? 0) > 0 ||
     (recent?.length ?? 0) > 0 ||
-    (collection?.length ?? 0) > 0 ||
+    (storage?.length ?? 0) > 0 ||
     teams.length > 0;
 
   return (
@@ -156,8 +156,8 @@ export function DashboardPage() {
         <GetStartedCard hasOwnedGames={ownedGroups.length > 0} />
       )}
 
-      {/* ── Row 1: Active Hunt + Collection Summary ── */}
-      {(primaryHunt || collectionStats.total > 0 || teams.length > 0) && (
+      {/* ── Row 1: Active Hunt + Storage Summary ── */}
+      {(primaryHunt || storageStats.total > 0 || teams.length > 0) && (
         <div className="grid md:grid-cols-2 gap-4">
           {/* Active hunt */}
           <div>
@@ -185,13 +185,13 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Collection summary */}
+          {/* Storage summary */}
           <div>
-            <SectionHeader title="Collection Summary" linkTo="/collection" linkLabel="View collection →" />
+            <SectionHeader title="Storage Summary" linkTo="/storage" linkLabel="View storage →" />
             <div className="card p-4 space-y-2.5">
-              <CollStat label="Pokémon owned" value={collectionStats.total} />
-              <CollStat label="Unique species" value={collectionStats.uniqueSpecies} />
-              <CollStat label="Shinies" value={collectionStats.shinies} accent="text-yellow-300" />
+              <CollStat label="Stored Pokémon" value={storageStats.total} />
+              <CollStat label="Unique species" value={storageStats.uniqueSpecies} />
+              <CollStat label="Shinies" value={storageStats.shinies} accent="text-yellow-300" />
               <CollStat label="Teams built" value={teams.length} />
               <CollStat
                 label="Shinies found (hunts)"
@@ -202,17 +202,17 @@ export function DashboardPage() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted">Living Dex</span>
                   <span className="font-mono">
-                    <span className="font-bold">{collectionStats.uniqueSpecies}</span>
+                    <span className="font-bold">{storageStats.uniqueSpecies}</span>
                     <span className="text-muted">/1025</span>
                     <span className="text-muted ml-1.5">
-                      ({formatPct(collectionStats.uniqueSpecies, 1025)})
+                      ({formatPct(storageStats.uniqueSpecies, 1025)})
                     </span>
                   </span>
                 </div>
                 <div className="mt-1 h-1.5 bg-bg-elev rounded-full overflow-hidden">
                   <div
                     className="h-full bg-accent rounded-full"
-                    style={{ width: `${(collectionStats.uniqueSpecies / 1025) * 100}%` }}
+                    style={{ width: `${(storageStats.uniqueSpecies / 1025) * 100}%` }}
                   />
                 </div>
               </div>
@@ -221,23 +221,23 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ── Row 2: Catch Progress + Next Tasks ── */}
+      {/* ── Row 2: Game Dex Progress + Next Tasks ── */}
       {ownedGroups.length > 0 && (
         <div className="grid md:grid-cols-2 gap-4">
-          {/* Catch progress */}
+          {/* Game Dex progress */}
           <div>
-            <SectionHeader title="Catch Progress" linkTo="/catch-tracker" linkLabel="Open tracker →" />
+            <SectionHeader title="Game Dex Progress" linkTo="/game-dexes" linkLabel="Open Game Dexes →" />
             <div className="card divide-y divide-line/50">
               {ownedGroups.map((g) => {
-                const caught = catchCountByGame[g.id] ?? 0;
+                const registered = registeredCountByGame[g.id] ?? 0;
                 const total = regionalDexSizes[g.id] ?? 0;
-                const pct = total > 0 ? (caught / total) * 100 : 0;
+                const pct = total > 0 ? (registered / total) * 100 : 0;
                 const dot = GAME_DOT[g.id] ?? 'bg-muted';
                 const dexName = GAME_DEX_NAME[g.id];
                 return (
                   <Link
                     key={g.id}
-                    to="/catch-tracker"
+                    to="/game-dexes"
                     className="flex items-center gap-3 px-4 py-2.5 hover:bg-bg-hover transition-colors"
                   >
                     <span className={clsx('w-2 h-2 rounded-full shrink-0', dot)} />
@@ -246,16 +246,16 @@ export function DashboardPage() {
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-sm font-medium shrink-0">{g.short}</span>
                           {dexName && (
-                            <span className="text-[10px] text-muted truncate">{dexName} Dex</span>
+                            <span className="text-[10px] text-muted truncate">{dexName}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-xs tabular-nums">
-                            <span className="font-bold text-green-400">{caught}</span>
+                            <span className="font-bold text-green-400">{registered}</span>
                             <span className="text-muted">/{total}</span>
                           </span>
                           <span className="text-xs text-muted w-10 text-right tabular-nums">
-                            {formatPct(caught, total)}
+                            {formatPct(registered, total)}
                           </span>
                         </div>
                       </div>
@@ -280,22 +280,22 @@ export function DashboardPage() {
               ownedGroups={ownedGroups}
               teams={teams}
               activeHunts={activeHunts ?? []}
-              catchCountByGame={catchCountByGame}
+              registeredCountByGame={registeredCountByGame}
               regionalDexSizes={regionalDexSizes}
             />
           </div>
         </div>
       )}
 
-      {/* ── Row 3: Recently Caught + Recently Viewed ── */}
+      {/* ── Row 3: Recently Added to Storage + Recently Viewed ── */}
       {(recentlyCaught.length > 0 || recentlyViewed.length > 0) && (
         <div className="grid md:grid-cols-2 gap-4">
           {recentlyCaught.length > 0 && (
             <div>
-              <SectionHeader title="Recently Caught" linkTo="/collection" linkLabel="View all →" />
+              <SectionHeader title="Recently Added" linkTo="/storage" linkLabel="View all →" />
               <div className="flex gap-2 overflow-x-auto pb-1 scroll-thin">
                 {recentlyCaught.map((entry) => (
-                  <CollectionChip key={entry.id} entry={entry} />
+                  <StorageChip key={entry.id} entry={entry} />
                 ))}
               </div>
             </div>
@@ -317,7 +317,7 @@ export function DashboardPage() {
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Quick Add</h2>
         <div className="flex flex-wrap gap-2">
-          <QuickChip to="/catch-tracker" icon="✓" label="Record Catch" />
+          <QuickChip to="/game-dexes" icon="✓" label="Record in Game Dex" />
           <QuickChip to="/shiny-hunter" icon="✨" label="New Hunt" />
           <QuickChip to="/team-builder" icon="⚔" label="New Team" onClick={() => Teams.create()} />
           <QuickChip to="/pokedex" icon="🔍" label="Search Pokédex" />
@@ -467,29 +467,29 @@ function CollStat({ label, value, accent }: { label: string; value: number; acce
 // ---------------------------------------------------------------------------
 
 function NextTasksWidget({
-  ownedGroups, teams, activeHunts, catchCountByGame, regionalDexSizes,
+  ownedGroups, teams, activeHunts, registeredCountByGame, regionalDexSizes,
 }: {
   ownedGroups: typeof GAME_GROUPS;
   teams: ReturnType<typeof Teams.list>;
   activeHunts: ShinyHunt[];
-  catchCountByGame: Record<string, number>;
+  registeredCountByGame: Record<string, number>;
   regionalDexSizes: Record<string, number>;
 }) {
   const tasks: { icon: string; label: string; to: string; sub?: string }[] = [];
 
-  // Most advanced catch tracker game
+  // Most advanced game dex
   const topGame = [...ownedGroups].sort(
-    (a, b) => (catchCountByGame[b.id] ?? 0) - (catchCountByGame[a.id] ?? 0)
+    (a, b) => (registeredCountByGame[b.id] ?? 0) - (registeredCountByGame[a.id] ?? 0)
   )[0];
   if (topGame) {
-    const caught = catchCountByGame[topGame.id] ?? 0;
+    const registered = registeredCountByGame[topGame.id] ?? 0;
     const total = regionalDexSizes[topGame.id] ?? 0;
     if (total > 0) {
       tasks.push({
         icon: '✓',
-        label: `Continue catching in ${topGame.short}`,
-        sub: `${caught}/${total} caught`,
-        to: '/catch-tracker',
+        label: `Continue in ${topGame.short}`,
+        sub: `${registered}/${total} registered`,
+        to: '/game-dexes',
       });
     }
   }
@@ -568,10 +568,10 @@ function NextTasksWidget({
 }
 
 // ---------------------------------------------------------------------------
-// Recently caught chip (from collection)
+// Recently added to storage chip
 // ---------------------------------------------------------------------------
 
-function CollectionChip({ entry }: { entry: CollectedPokemon }) {
+function StorageChip({ entry }: { entry: StoredPokemon }) {
   return (
     <Link
       to={`/pokemon/${entry.pokemonId}`}

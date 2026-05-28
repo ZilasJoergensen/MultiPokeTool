@@ -21,7 +21,7 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
 const DB_NAME = 'pokedex-userdata';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 /** Singleton key for "the only row in this store". */
 const SINGLETON = '_';
@@ -77,7 +77,7 @@ export interface RecentView {
   viewedAt: number;
 }
 
-export type CatchStatus = 'seen' | 'caught';
+export type GameDexStatus = 'missing' | 'registered' | 'in_game' | 'moved_to_storage';
 
 // --- Shiny hunt types -------------------------------------------------------
 
@@ -105,17 +105,17 @@ export interface ShinyHunt {
   notes?: string;
 }
 
-export interface CatchRecord {
+export interface GameDexRecord {
   /** Composite key: `${gameGroupId}:${pokemonId}` */
   id: string;
   gameGroupId: string;
   pokemonId: number;
   pokemonName: string;
-  status: CatchStatus;
+  status: GameDexStatus;
   updatedAt: number;
 }
 
-export interface CollectedPokemon {
+export interface StoredPokemon {
   id: string;
   pokemonId: number;
   pokemonName: string;
@@ -145,9 +145,9 @@ interface PokedexDB extends DBSchema {
     value: RecentView;
     indexes: { 'by-viewed': number };
   };
-  catches: {
+  gameDexes: {
     key: string; // `${gameGroupId}:${pokemonId}`
-    value: CatchRecord;
+    value: GameDexRecord;
     indexes: { 'by-game': string };
   };
   shinyHunts: {
@@ -155,9 +155,9 @@ interface PokedexDB extends DBSchema {
     value: ShinyHunt;
     indexes: { 'by-status': string; 'by-updated': number };
   };
-  collection: {
+  storage: {
     key: string; // uuid
-    value: CollectedPokemon;
+    value: StoredPokemon;
     indexes: { 'by-pokemon': number; 'by-added': number };
   };
 }
@@ -175,10 +175,10 @@ function db() {
           const recent = idb.createObjectStore('recent', { keyPath: 'pokemonId' });
           recent.createIndex('by-viewed', 'viewedAt');
         }
-        // v2 — catch tracker
+        // v2 — game dexes (formerly catch tracker)
         if (oldVersion < 2) {
-          const catches = idb.createObjectStore('catches', { keyPath: 'id' });
-          catches.createIndex('by-game', 'gameGroupId');
+          const gameDexes = idb.createObjectStore('gameDexes', { keyPath: 'id' });
+          gameDexes.createIndex('by-game', 'gameGroupId');
         }
         // v3 — shiny hunter
         if (oldVersion < 3) {
@@ -186,11 +186,23 @@ function db() {
           hunts.createIndex('by-status', 'status');
           hunts.createIndex('by-updated', 'updatedAt');
         }
-        // v4 — personal collection
+        // v4 — personal storage (formerly collection)
         if (oldVersion < 4) {
-          const col = idb.createObjectStore('collection', { keyPath: 'id' });
-          col.createIndex('by-pokemon', 'pokemonId');
-          col.createIndex('by-added', 'addedAt');
+          const stor = idb.createObjectStore('storage', { keyPath: 'id' });
+          stor.createIndex('by-pokemon', 'pokemonId');
+          stor.createIndex('by-added', 'addedAt');
+        }
+        // v5 — create gameDexes/storage for users upgrading from v4 that had catches/collection
+        if (oldVersion < 5) {
+          if (!idb.objectStoreNames.contains('gameDexes')) {
+            const gameDexes = idb.createObjectStore('gameDexes', { keyPath: 'id' });
+            gameDexes.createIndex('by-game', 'gameGroupId');
+          }
+          if (!idb.objectStoreNames.contains('storage')) {
+            const stor = idb.createObjectStore('storage', { keyPath: 'id' });
+            stor.createIndex('by-pokemon', 'pokemonId');
+            stor.createIndex('by-added', 'addedAt');
+          }
         }
       },
     });
@@ -200,7 +212,7 @@ function db() {
 
 // Simple pub/sub so React components can re-render when this store changes
 // without coupling every page to a shared context.
-type StoreEvent = 'prefs' | 'favorites' | 'recent' | 'catches' | 'shinyHunts' | 'collection';
+type StoreEvent = 'prefs' | 'favorites' | 'recent' | 'gameDexes' | 'shinyHunts' | 'storage';
 const listeners = new Set<(evt: StoreEvent) => void>();
 export function subscribeStore(cb: (evt: StoreEvent) => void) {
   listeners.add(cb);
@@ -319,21 +331,21 @@ export async function clearRecent() {
   emit('recent');
 }
 
-// --- Catch tracker ----------------------------------------------------------
+// --- Game Dexes (game-specific Pokédex registration) --------------------------------
 
-export async function listCatchesForGame(gameGroupId: string): Promise<CatchRecord[]> {
+export async function listGameDexForGame(gameGroupId: string): Promise<GameDexRecord[]> {
   const idb = await db();
-  return idb.getAllFromIndex('catches', 'by-game', gameGroupId);
+  return idb.getAllFromIndex('gameDexes', 'by-game', gameGroupId);
 }
 
-export async function setCatch(
+export async function setGameDexStatus(
   gameGroupId: string,
   pokemonId: number,
   pokemonName: string,
-  status: CatchStatus,
+  status: GameDexStatus,
 ): Promise<void> {
   const idb = await db();
-  await idb.put('catches', {
+  await idb.put('gameDexes', {
     id: `${gameGroupId}:${pokemonId}`,
     gameGroupId,
     pokemonId,
@@ -341,18 +353,18 @@ export async function setCatch(
     status,
     updatedAt: Date.now(),
   });
-  emit('catches');
+  emit('gameDexes');
 }
 
-export async function clearCatch(gameGroupId: string, pokemonId: number): Promise<void> {
+export async function clearGameDex(gameGroupId: string, pokemonId: number): Promise<void> {
   const idb = await db();
-  await idb.delete('catches', `${gameGroupId}:${pokemonId}`);
-  emit('catches');
+  await idb.delete('gameDexes', `${gameGroupId}:${pokemonId}`);
+  emit('gameDexes');
 }
 
-export async function listAllCatches(): Promise<CatchRecord[]> {
+export async function listAllGameDexRecords(): Promise<GameDexRecord[]> {
   const idb = await db();
-  return idb.getAll('catches');
+  return idb.getAll('gameDexes');
 }
 
 // --- Shiny hunts ------------------------------------------------------------
@@ -462,63 +474,63 @@ export async function listActiveHunts(): Promise<ShinyHunt[]> {
   return [...active, ...paused].sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-// --- Personal collection ----------------------------------------------------
+// --- Personal Storage (owned Pokémon) -----------------------------------------------
 
-function collectionId(): string {
+function storageId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function listCollection(): Promise<CollectedPokemon[]> {
+export async function listStorage(): Promise<StoredPokemon[]> {
   const idb = await db();
-  const all = await idb.getAllFromIndex('collection', 'by-added');
+  const all = await idb.getAllFromIndex('storage', 'by-added');
   return all.sort((a, b) => b.addedAt - a.addedAt);
 }
 
-export async function addToCollection(
-  draft: Omit<CollectedPokemon, 'id' | 'addedAt' | 'updatedAt'>,
-): Promise<CollectedPokemon> {
+export async function addToStorage(
+  draft: Omit<StoredPokemon, 'id' | 'addedAt' | 'updatedAt'>,
+): Promise<StoredPokemon> {
   const idb = await db();
   const now = Date.now();
-  const entry: CollectedPokemon = { ...draft, id: collectionId(), addedAt: now, updatedAt: now };
-  await idb.put('collection', entry);
-  emit('collection');
+  const entry: StoredPokemon = { ...draft, id: storageId(), addedAt: now, updatedAt: now };
+  await idb.put('storage', entry);
+  emit('storage');
   return entry;
 }
 
-export async function updateCollected(id: string, patch: Partial<CollectedPokemon>): Promise<void> {
+export async function updateStored(id: string, patch: Partial<StoredPokemon>): Promise<void> {
   const idb = await db();
-  const existing = await idb.get('collection', id);
+  const existing = await idb.get('storage', id);
   if (!existing) return;
-  await idb.put('collection', { ...existing, ...patch, updatedAt: Date.now() });
-  emit('collection');
+  await idb.put('storage', { ...existing, ...patch, updatedAt: Date.now() });
+  emit('storage');
 }
 
-export async function removeFromCollection(id: string): Promise<void> {
+export async function removeFromStorage(id: string): Promise<void> {
   const idb = await db();
-  await idb.delete('collection', id);
-  emit('collection');
+  await idb.delete('storage', id);
+  emit('storage');
 }
 
-/** All collection entries for a specific Pokémon (uses the by-pokemon index). */
-export async function listCollectionForPokemon(pokemonId: number): Promise<CollectedPokemon[]> {
+/** All storage entries for a specific Pokémon (uses the by-pokemon index). */
+export async function listStorageForPokemon(pokemonId: number): Promise<StoredPokemon[]> {
   const idb = await db();
-  return idb.getAllFromIndex('collection', 'by-pokemon', pokemonId);
+  return idb.getAllFromIndex('storage', 'by-pokemon', pokemonId);
 }
 
 /**
- * Fast catch-status lookup for one Pokémon across a list of game groups.
+ * Fast game dex status lookup for one Pokémon across a list of game groups.
  * Uses composite key lookups rather than a full table scan.
  */
-export async function listCatchesForPokemon(
+export async function listGameDexStatusForPokemon(
   pokemonId: number,
   gameGroupIds: string[],
-): Promise<CatchRecord[]> {
+): Promise<GameDexRecord[]> {
   if (gameGroupIds.length === 0) return [];
   const idb = await db();
   const results = await Promise.all(
-    gameGroupIds.map((gId) => idb.get('catches', `${gId}:${pokemonId}`)),
+    gameGroupIds.map((gId) => idb.get('gameDexes', `${gId}:${pokemonId}`)),
   );
-  return results.filter((r): r is CatchRecord => r != null);
+  return results.filter((r): r is GameDexRecord => r != null);
 }
 
 // --- Backup / restore ------------------------------------------------------
@@ -534,20 +546,20 @@ export interface BackupBundle {
   /** Teams currently live in localStorage; we include them here so backups are
    *  complete. They'll move into IndexedDB in a future phase. */
   teamsLocalStorage?: string;
-  catches?: CatchRecord[];
+  gameDexes?: GameDexRecord[];
   shinyHunts?: ShinyHunt[];
-  collection?: CollectedPokemon[];
+  storage?: StoredPokemon[];
 }
 
 export async function exportEverything(): Promise<BackupBundle> {
   const idb = await db();
-  const [prefs, favorites, recent, catches, shinyHunts, collection] = await Promise.all([
+  const [prefs, favorites, recent, gameDexes, shinyHunts, storage] = await Promise.all([
     idb.get('prefs', SINGLETON),
     listFavorites(),
     listRecent(),
-    listAllCatches(),
+    listAllGameDexRecords(),
     listHunts(),
-    listCollection(),
+    listStorage(),
   ]);
   return {
     schemaVersion: 1,
@@ -557,9 +569,9 @@ export async function exportEverything(): Promise<BackupBundle> {
     favorites,
     recent,
     teamsLocalStorage: localStorage.getItem('pokedex-teams-v1') ?? undefined,
-    catches,
+    gameDexes,
     shinyHunts,
-    collection,
+    storage,
   };
 }
 
@@ -568,9 +580,9 @@ export interface ImportResult {
   favorites: number;
   recent: number;
   teams: boolean;
-  catches: number;
+  gameDexes: number;
   shinyHunts: number;
-  collection: number;
+  storage: number;
 }
 
 export async function importEverything(
@@ -584,16 +596,16 @@ export async function importEverything(
     );
   }
   const idb = await db();
-  const result: ImportResult = { prefs: false, favorites: 0, recent: 0, teams: false, catches: 0, shinyHunts: 0, collection: 0 };
+  const result: ImportResult = { prefs: false, favorites: 0, recent: 0, teams: false, gameDexes: 0, shinyHunts: 0, storage: 0 };
 
   if (!opts.merge) {
     await Promise.all([
       idb.clear('prefs'),
       idb.clear('favorites'),
       idb.clear('recent'),
-      idb.clear('catches'),
+      idb.clear('gameDexes'),
       idb.clear('shinyHunts'),
-      idb.clear('collection'),
+      idb.clear('storage'),
     ]);
   }
 
@@ -622,11 +634,11 @@ export async function importEverything(
     result.teams = true;
   }
 
-  if (bundle.catches?.length) {
-    const tx = idb.transaction('catches', 'readwrite');
-    await Promise.all(bundle.catches.map((c) => tx.store.put(c)));
+  if (bundle.gameDexes?.length) {
+    const tx = idb.transaction('gameDexes', 'readwrite');
+    await Promise.all(bundle.gameDexes.map((g) => tx.store.put(g)));
     await tx.done;
-    result.catches = bundle.catches.length;
+    result.gameDexes = bundle.gameDexes.length;
   }
 
   if (bundle.shinyHunts?.length) {
@@ -636,19 +648,19 @@ export async function importEverything(
     result.shinyHunts = bundle.shinyHunts.length;
   }
 
-  if (bundle.collection?.length) {
-    const tx = idb.transaction('collection', 'readwrite');
-    await Promise.all(bundle.collection.map((c) => tx.store.put(c)));
+  if (bundle.storage?.length) {
+    const tx = idb.transaction('storage', 'readwrite');
+    await Promise.all(bundle.storage.map((s) => tx.store.put(s)));
     await tx.done;
-    result.collection = bundle.collection.length;
+    result.storage = bundle.storage.length;
   }
 
   emit('prefs');
   emit('favorites');
   emit('recent');
-  emit('catches');
+  emit('gameDexes');
   emit('shinyHunts');
-  emit('collection');
+  emit('storage');
 
   return result;
 }

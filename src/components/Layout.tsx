@@ -43,8 +43,8 @@ export function Layout() {
           <nav className="hidden sm:flex items-center gap-1 text-sm">
             <Tab to="/" end>Home</Tab>
             <Tab to="/pokedex">Pokédex</Tab>
-            <Tab to="/collection">Collection</Tab>
-            <Tab to="/catch-tracker">Catch Tracker</Tab>
+            <Tab to="/storage">Storage</Tab>
+            <Tab to="/game-dexes">Game Dexes</Tab>
             <Tab to="/shiny-hunter">Shiny Hunter</Tab>
             <Tab to="/team-builder">Team Builder</Tab>
             <Tab to="/damage-calc">Damage Calc</Tab>
@@ -104,9 +104,11 @@ function MobileMenu() {
         <nav className="flex flex-col p-4 gap-2 text-text">
           <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Home</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Pokédex</NavLink>
-          <NavLink onClick={() => setOpen(false)} to="/catch-tracker" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Catch Tracker</NavLink>
-          <NavLink onClick={() => setOpen(false)} to="/collection" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Collection</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/storage" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Storage</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/game-dexes" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Game Dexes</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/shiny-hunter" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Shiny Hunter</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Team Builder</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/damage-calc" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Damage Calc</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/settings" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Settings</NavLink>
         </nav>
       </aside>

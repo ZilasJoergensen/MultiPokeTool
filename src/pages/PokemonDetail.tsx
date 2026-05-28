@@ -6,6 +6,8 @@ import { api, idFromUrl, type EvolutionLink, type EvolutionDetail } from '../lib
 import { Sprite, spriteUrl } from '../components/Sprite';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatBar } from '../components/StatBar';
+import { MoveToStorageModal } from '../components/MoveToStorageModal';
+import { EvolutionChainModal } from '../components/EvolutionChainModal';
 import {
   STAT_LABELS,
   bestFlavorText,
@@ -25,9 +27,9 @@ import { InfoTip } from '../components/InfoTip';
 import { FadeIn } from '../components/FadeIn';
 import {
   isFavorite, recordView, toggleFavorite,
-  getPrefs, addToCollection, setCatch, clearCatch, createHunt,
-  listCollectionForPokemon, listCatchesForPokemon, listActiveHunts,
-  type CatchStatus,
+  getPrefs, addToStorage, setGameDexStatus, clearGameDex, createHunt,
+  listStorageForPokemon, listGameDexStatusForPokemon, listActiveHunts,
+  type GameDexStatus,
 } from '../lib/store';
 import { useStoreValue } from '../lib/use-store';
 import { GAME_GROUPS } from '../lib/games';
@@ -1480,12 +1482,12 @@ function PersonalStatusBar({
   pokemonId: number;
   ownedGameGroupIds: string[];
 }) {
-  const [collectionEntries] = useStoreValue(
-    () => listCollectionForPokemon(pokemonId),
+  const [storageEntries] = useStoreValue(
+    () => listStorageForPokemon(pokemonId),
     ['collection'],
   );
-  const [catchRecords] = useStoreValue(
-    () => listCatchesForPokemon(pokemonId, ownedGameGroupIds),
+  const [gameDexRecords] = useStoreValue(
+    () => listGameDexStatusForPokemon(pokemonId, ownedGameGroupIds),
     ['catches'],
   );
   const [activeHunts] = useStoreValue(
@@ -1498,9 +1500,9 @@ function PersonalStatusBar({
     [],
   );
 
-  const owned = collectionEntries?.length ?? 0;
-  const shinyOwned = collectionEntries?.filter((e) => e.shiny).length ?? 0;
-  const caughtIn = catchRecords?.filter((r) => r.status === 'caught') ?? [];
+  const owned = storageEntries?.length ?? 0;
+  const shinyOwned = storageEntries?.filter((e) => e.shiny).length ?? 0;
+  const caughtIn = gameDexRecords?.filter((r) => r.status === 'in_game') ?? [];
   const hasHunt = (activeHunts?.length ?? 0) > 0;
 
   if (!owned && !caughtIn.length && !hasHunt && !onTeams.length) return null;
@@ -1573,47 +1575,56 @@ function QuickActions({
   const { id: pokemonId, name: pokemonName } = pokemon;
 
   const [fav] = useStoreValue(() => isFavorite(pokemonId), ['favorites']);
-  const [collectionEntries] = useStoreValue(
-    () => listCollectionForPokemon(pokemonId),
+  const [storageEntries] = useStoreValue(
+    () => listStorageForPokemon(pokemonId),
     ['collection'],
   );
-  const [catchRecords, refetchCatches] = useStoreValue(
-    () => listCatchesForPokemon(pokemonId, ownedGameGroupIds),
+  const [gameDexRecords, refetchGameDexes] = useStoreValue(
+    () => listGameDexStatusForPokemon(pokemonId, ownedGameGroupIds),
     ['catches'],
   );
 
-  const inCollection = (collectionEntries?.length ?? 0) > 0;
-  const catchMap = useMemo(() => {
-    const m = new Map<string, CatchStatus>();
-    catchRecords?.forEach((r) => m.set(r.gameGroupId, r.status));
+  const inStorage = (storageEntries?.length ?? 0) > 0;
+  const gameDexMap = useMemo(() => {
+    const m = new Map<string, GameDexStatus>();
+    gameDexRecords?.forEach((r) => m.set(r.gameGroupId, r.status));
     return m;
-  }, [catchRecords]);
+  }, [gameDexRecords]);
 
   const ownedGroups = useMemo(
     () => GAME_GROUPS.filter((g) => ownedGameGroupIds.includes(g.id)),
     [ownedGameGroupIds],
   );
 
-  const [catchOpen, setCatchOpen] = useState(false);
+  const [catchOpen, setGameDexStatusOpen] = useState(false);
   const [huntOpen, setHuntOpen] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
+  const [moveToStorageOpen, setMoveToStorageOpen] = useState(false);
+  const [moveToStorageGameId, setMoveToStorageGameId] = useState('');
+  const [evolutionOpen, setEvolutionOpen] = useState(false);
+  const [evolutionGameId, setEvolutionGameId] = useState('');
   const [huntGameId, setHuntGameId] = useState(() => ownedGameGroupIds[0] ?? '');
   const [huntMethod, setHuntMethod] = useState('random-encounter');
 
-  async function handleQuickCollect() {
-    if (inCollection) return;
-    await addToCollection({ pokemonId, pokemonName, shiny: false });
+  const { data: speciesData } = useQuery({
+    queryKey: ['species', pokemonName],
+    queryFn: () => api.species(pokemonName),
+  });
+
+  async function handleQuickAddStorage() {
+    if (inStorage) return;
+    await addToStorage({ pokemonId, pokemonName, shiny: false });
   }
 
-  async function handleToggleCatch(gameId: string) {
-    const current = catchMap.get(gameId);
-    if (current === 'caught') {
-      await clearCatch(gameId, pokemonId);
+  async function handleToggleGameDex(gameId: string) {
+    const current = gameDexMap.get(gameId);
+    if (current === 'in_game') {
+      await clearGameDex(gameId, pokemonId);
     } else {
-      await setCatch(gameId, pokemonId, pokemonName, 'caught');
+      await setGameDexStatus(gameId, pokemonId, pokemonName, 'in_game');
     }
-    refetchCatches();
-    setCatchOpen(false);
+    refetchGameDexes();
+    setGameDexStatusOpen(false);
   }
 
   async function handleStartHunt() {
@@ -1628,45 +1639,107 @@ function QuickActions({
     setHuntOpen(false);
   }
 
-  const anyCaught = catchRecords?.some((r) => r.status === 'caught');
+  const anyCaught = gameDexRecords?.some((r) => r.status === 'in_game');
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {/* + Collection */}
+      {/* + Storage */}
       <button
         type="button"
-        className={clsx('btn text-sm', inCollection && 'text-green-300 border-green-300/40')}
-        onClick={handleQuickCollect}
-        title={inCollection ? 'Already in collection — visit Collection to manage' : 'Quick-add to your collection'}
+        className={clsx('btn text-sm', inStorage && 'text-green-300 border-green-300/40')}
+        onClick={handleQuickAddStorage}
+        title={inStorage ? 'Already in collection — visit Collection to manage' : 'Quick-add to your collection'}
       >
-        {inCollection ? `✓ ${collectionEntries!.length} in Collection` : '+ Collection'}
+        {inStorage ? `✓ ${storageEntries!.length} in Storage` : '+ Storage'}
       </button>
 
-      {/* Mark Caught */}
+      {/* Mark in Game Dex */}
       {ownedGroups.length > 0 && (
         <div className="relative">
           <button
             type="button"
             className={clsx('btn text-sm', anyCaught && 'text-blue-300 border-blue-300/40')}
-            onClick={() => { setCatchOpen((x) => !x); setHuntOpen(false); setTeamOpen(false); }}
+            onClick={() => { setGameDexStatusOpen((x) => !x); setHuntOpen(false); setTeamOpen(false); }}
           >
-            ✓ Mark Caught
+            ✓ Mark in Game Dex
           </button>
           {catchOpen && (
             <div className="absolute mt-1 z-20 min-w-[11rem] card p-2 space-y-0.5">
               {ownedGroups.map((g) => {
-                const status = catchMap.get(g.id);
+                const status = gameDexMap.get(g.id);
                 return (
                   <button
                     key={g.id}
                     type="button"
                     className="w-full text-left px-3 py-1.5 rounded text-sm hover:bg-bg-hover flex items-center justify-between gap-2"
-                    onClick={() => handleToggleCatch(g.id)}
+                    onClick={() => handleToggleGameDex(g.id)}
                   >
                     <span>{g.short}</span>
-                    {status === 'caught' && <span className="text-green-400 text-xs">✓ caught</span>}
+                    {status === 'in_game' && <span className="text-green-400 text-xs">✓ in game</span>}
                     {status === 'seen' && <span className="text-yellow-400 text-xs">◉ seen</span>}
                     {!status && <span className="text-muted text-xs">—</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Move to Storage */}
+      {ownedGroups.length > 0 && (
+        <div className="relative">
+          <button
+            type="button"
+            className="btn text-sm"
+            onClick={() => { setMoveToStorageOpen((x) => !x); setGameDexStatusOpen(false); setHuntOpen(false); setTeamOpen(false); }}
+          >
+            📦 Move to Storage
+          </button>
+          {moveToStorageOpen && (
+            <div className="absolute mt-1 z-20 min-w-[11rem] card p-2 space-y-0.5">
+              {ownedGroups.map((g) => {
+                const status = gameDexMap.get(g.id);
+                if (!status || status === 'missing') return null;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    className="w-full text-left px-3 py-1.5 rounded text-sm hover:bg-bg-hover"
+                    onClick={() => { setMoveToStorageGameId(g.id); setMoveToStorageOpen(false); }}
+                  >
+                    {g.short}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Evolved Into */}
+      {ownedGroups.length > 0 && (
+        <div className="relative">
+          <button
+            type="button"
+            className="btn text-sm"
+            onClick={() => { setEvolutionOpen((x) => !x); setGameDexStatusOpen(false); setHuntOpen(false); setTeamOpen(false); setMoveToStorageOpen(false); }}
+          >
+            ⚡ Evolved Into
+          </button>
+          {evolutionOpen && (
+            <div className="absolute mt-1 z-20 min-w-[11rem] card p-2 space-y-0.5">
+              {ownedGroups.map((g) => {
+                const status = gameDexMap.get(g.id);
+                if (!status || status === 'missing') return null;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    className="w-full text-left px-3 py-1.5 rounded text-sm hover:bg-bg-hover"
+                    onClick={() => { setEvolutionGameId(g.id); setEvolutionOpen(false); }}
+                  >
+                    {g.short}
                   </button>
                 );
               })}
@@ -1681,7 +1754,7 @@ function QuickActions({
           <button
             type="button"
             className="btn text-sm"
-            onClick={() => { setHuntOpen((x) => !x); setCatchOpen(false); setTeamOpen(false); }}
+            onClick={() => { setHuntOpen((x) => !x); setGameDexStatusOpen(false); setTeamOpen(false); }}
           >
             ✨ Hunt
           </button>
@@ -1728,7 +1801,7 @@ function QuickActions({
         pokemonId={pokemonId}
         pokemonName={pokemonName}
         open={teamOpen}
-        setOpen={(v) => { setTeamOpen(v); if (v) { setCatchOpen(false); setHuntOpen(false); } }}
+        setOpen={(v) => { setTeamOpen(v); if (v) { setGameDexStatusOpen(false); setHuntOpen(false); } }}
       />
 
       {/* Favorite */}
@@ -1740,6 +1813,36 @@ function QuickActions({
       >
         {fav ? '★ Favorited' : '☆ Favorite'}
       </button>
+
+      {/* Move to Storage Modal */}
+      {moveToStorageGameId && (
+        <MoveToStorageModal
+          pokemonId={pokemonId}
+          pokemonName={pokemonName}
+          gameGroupId={moveToStorageGameId}
+          gameGroupName={ownedGroups.find((g) => g.id === moveToStorageGameId)?.label ?? ''}
+          onClose={() => setMoveToStorageGameId('')}
+          onMoveComplete={() => {
+            refetchGameDexes();
+            setMoveToStorageGameId('');
+          }}
+        />
+      )}
+
+      {/* Evolution Modal */}
+      {evolutionGameId && speciesData?.evolution_chain && (
+        <EvolutionChainModal
+          pokemonId={pokemonId}
+          pokemonName={pokemonName}
+          gameGroupId={evolutionGameId}
+          speciesUrl={speciesData.evolution_chain.url}
+          onClose={() => setEvolutionGameId('')}
+          onEvolved={() => {
+            refetchGameDexes();
+            setEvolutionGameId('');
+          }}
+        />
+      )}
     </div>
   );
 }

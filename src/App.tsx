@@ -5,10 +5,10 @@ import { PokemonDetailPage } from './pages/PokemonDetail';
 import { TeamBuilderPage } from './pages/TeamBuilder';
 import { DamageCalcPage } from './pages/DamageCalc';
 import { SettingsPage } from './pages/Settings';
-import { CatchTrackerPage } from './pages/CatchTracker';
+import { GameDexesPage } from './pages/GameDexes';
 import { ShinyHunterPage } from './pages/ShinyHunter';
 import { DashboardPage } from './pages/Dashboard';
-import { CollectionPage } from './pages/Collection';
+import { StoragePage } from './pages/Storage';
 
 export default function App() {
   return (
@@ -17,8 +17,8 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="/pokedex" element={<PokedexPage />} />
         <Route path="/pokemon/:idOrName" element={<PokemonDetailPage />} />
-        <Route path="/collection" element={<CollectionPage />} />
-        <Route path="/catch-tracker" element={<CatchTrackerPage />} />
+        <Route path="/storage" element={<StoragePage />} />
+        <Route path="/game-dexes" element={<GameDexesPage />} />
         <Route path="/shiny-hunter" element={<ShinyHunterPage />} />
         <Route path="/team-builder" element={<TeamBuilderPage />} />
         <Route path="/team-builder/:teamId" element={<TeamBuilderPage />} />
