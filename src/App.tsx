@@ -3,7 +3,7 @@ import { Layout } from './components/Layout';
 import { PokedexPage } from './pages/Pokedex';
 import { PokemonDetailPage } from './pages/PokemonDetail';
 import { TeamBuilderPage } from './pages/TeamBuilder';
-import { DamageCalcPage } from './pages/DamageCalc';
+import { BattlePlannerPage } from './pages/BattlePlanner';
 import { SettingsPage } from './pages/Settings';
 import { GameDexesPage } from './pages/GameDexes';
 import { ShinyHunterPage } from './pages/ShinyHunter';
@@ -22,7 +22,7 @@ export default function App() {
         <Route path="/shiny-hunter" element={<ShinyHunterPage />} />
         <Route path="/team-builder" element={<TeamBuilderPage />} />
         <Route path="/team-builder/:teamId" element={<TeamBuilderPage />} />
-        <Route path="/damage-calc" element={<DamageCalcPage />} />
+        <Route path="/battle-planner" element={<BattlePlannerPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
