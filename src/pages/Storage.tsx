@@ -97,6 +97,11 @@ export function StoragePage() {
     setAddTarget(null);
   }
 
+  async function handleQuickAdd(p: PokemonRef) {
+    await addToStorage({ pokemonId: p.id, pokemonName: p.name, shiny: false });
+    refetch();
+  }
+
   async function handleUpdate(id: string, patch: Partial<StoredPokemon>) {
     await updateStored(id, patch);
     refetch();
@@ -216,6 +221,7 @@ export function StoragePage() {
           ownedIds={ownedIds}
           shinyIds={shinyIds}
           onAdd={(p) => setAddTarget(p)}
+          onQuickAdd={handleQuickAdd}
           onEdit={(pokemonId) => {
             const entry = (storage ?? []).find((c) => c.pokemonId === pokemonId);
             if (entry) setEditTarget(entry);
@@ -287,19 +293,42 @@ function LivingDexView({
   ownedIds,
   shinyIds,
   onAdd,
+  onQuickAdd,
   onEdit,
 }: {
   pokemonIndex?: PokemonRef[];
   ownedIds: Set<number>;
   shinyIds: Set<number>;
   onAdd: (p: PokemonRef) => void;
+  onQuickAdd: (p: PokemonRef) => void;
   onEdit: (pokemonId: number) => void;
 }) {
   const pct = Math.round((ownedIds.size / 1025) * 100);
+  const [quickAdd, setQuickAdd] = useState(false);
+  const [flashIds, setFlashIds] = useState<Set<number>>(new Set());
+
+  function handleTileClick(p: PokemonRef, owned: boolean) {
+    if (owned) {
+      onEdit(p.id);
+    } else if (quickAdd) {
+      onQuickAdd(p);
+      // Brief green flash on the tile
+      setFlashIds((prev) => new Set([...prev, p.id]));
+      setTimeout(() => {
+        setFlashIds((prev) => {
+          const next = new Set(prev);
+          next.delete(p.id);
+          return next;
+        });
+      }, 600);
+    } else {
+      onAdd(p);
+    }
+  }
 
   return (
     <div className="space-y-4">
-      {/* Progress bar */}
+      {/* Progress bar + Quick Add toggle */}
       <div className="flex items-center gap-4">
         <div className="flex-1 h-2 bg-bg-elev rounded-full overflow-hidden">
           <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -310,27 +339,66 @@ function LivingDexView({
         </div>
       </div>
 
+      {/* Quick Add toggle */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted">
+          {quickAdd
+            ? 'Click any empty slot to instantly add it — no form needed.'
+            : 'Click an empty slot to open the full add form.'}
+        </p>
+        <label className="flex items-center gap-2 cursor-pointer select-none shrink-0 ml-4">
+          <span className={clsx('text-sm font-medium transition-colors', quickAdd ? 'text-accent' : 'text-muted')}>
+            ⚡ Quick Add
+          </span>
+          <div
+            role="switch"
+            aria-checked={quickAdd}
+            onClick={() => setQuickAdd((v) => !v)}
+            className={clsx(
+              'w-10 h-6 rounded-full transition-colors relative cursor-pointer',
+              quickAdd ? 'bg-accent' : 'bg-bg-elev border border-line',
+            )}
+          >
+            <div
+              className={clsx(
+                'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
+                quickAdd ? 'translate-x-4' : 'translate-x-0.5',
+              )}
+            />
+          </div>
+        </label>
+      </div>
+
       {/* Grid */}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(58px,1fr))] gap-1">
         {(pokemonIndex ?? []).map((p) => {
           const owned = ownedIds.has(p.id);
           const shiny = shinyIds.has(p.id);
+          const flash = flashIds.has(p.id);
           return (
             <button
               key={p.id}
               type="button"
-              title={`#${padId(p.id)} ${prettyName(p.name)}${owned ? ' ✓' : ''}`}
-              onClick={() => (owned ? onEdit(p.id) : onAdd(p))}
+              title={`#${padId(p.id)} ${prettyName(p.name)}${owned ? ' ✓' : quickAdd ? ' — click to add' : ''}`}
+              onClick={() => handleTileClick(p, owned)}
               className={clsx(
                 'relative rounded-lg p-0.5 transition-all flex flex-col items-center gap-0',
                 owned
                   ? 'ring-1 ring-green-500/50 bg-green-500/10 hover:ring-green-400'
+                  : quickAdd
+                  ? 'opacity-50 hover:opacity-100 hover:ring-2 hover:ring-accent/60 hover:bg-accent/10'
                   : 'opacity-35 hover:opacity-60',
+                flash && 'ring-2 ring-green-400 bg-green-500/20 scale-110 opacity-100',
               )}
             >
               <Sprite id={p.id} name={p.name} shiny={shiny} size={48} />
               {shiny && (
                 <span className="absolute top-0 right-0 text-[8px] leading-none">✨</span>
+              )}
+              {flash && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-green-500/30 text-green-300 text-base font-bold">
+                  ✓
+                </span>
               )}
             </button>
           );
