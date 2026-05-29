@@ -115,17 +115,11 @@ export function BattlePlannerPage() {
   const [oppSearch, setOppSearch] = useState<[string, string]>(['', '']);
   const [oppNotesOpen, setOppNotesOpen] = useState<[boolean, boolean]>([false, false]);
 
-  // Type check state — up to 2 selected types
-  const [tcSelectedTypes, setTcSelectedTypes] = useState<TypeName[]>([]);
-
-  const handleTcToggle = (type: TypeName) => {
-    setTcSelectedTypes((prev) => {
-      if (prev.includes(type)) return prev.filter((t) => t !== type);
-      if (prev.length < 2) return [...prev, type];
-      // Already 2 selected — drop oldest, add new
-      return [prev[1], type];
-    });
-  };
+  // Type checker state — defensive and offensive modes
+  const [tcDefTypes, setTcDefTypes] = useState<[TypeName | '', TypeName | '']>(['', '']);
+  const [tcOffMoveType, setTcOffMoveType] = useState<TypeName | ''>('');
+  const [tcOffDefTypes, setTcOffDefTypes] = useState<[TypeName | '', TypeName | '']>(['', '']);
+  const [tcMode, setTcMode] = useState<'defensive' | 'offensive'>('defensive');
 
   // Pokémon index for opponent search
   const { data: pokemonIndex } = useQuery({
@@ -421,13 +415,15 @@ export function BattlePlannerPage() {
 
       {/* ── TYPE CHECK VIEW ── */}
       {view === 'type-check' && (
-        <TypeCheckView
-          selectedTypes={tcSelectedTypes}
-          onToggle={handleTcToggle}
-          onClear={() => setTcSelectedTypes([])}
-          onSetTypes={setTcSelectedTypes}
-          selectedTeam={selectedTeam}
-          teamMemberData={teamMemberData}
+        <TypeCheckerView
+          defTypes={tcDefTypes}
+          setDefTypes={setTcDefTypes}
+          offMoveType={tcOffMoveType}
+          setOffMoveType={setTcOffMoveType}
+          offDefTypes={tcOffDefTypes}
+          setOffDefTypes={setTcOffDefTypes}
+          mode={tcMode}
+          setMode={setTcMode}
         />
       )}
 
@@ -927,174 +923,321 @@ function MatchupAnalysis({ myPokemon, opponents, teamSlots, teamData, moveTypeMa
 }
 
 // ---------------------------------------------------------------------------
-// TypeCheckView — visual type selector
+// TypeCheckerView — Defensive vs Offensive type matching
 // ---------------------------------------------------------------------------
 
-interface TypeCheckViewProps {
-  selectedTypes: TypeName[];
-  onToggle: (t: TypeName) => void;
-  onClear: () => void;
-  onSetTypes: (types: TypeName[]) => void;
-  selectedTeam: Team | null;
-  teamMemberData: (Pokemon | null)[];
+interface TypeCheckerViewProps {
+  defTypes: [TypeName | '', TypeName | ''];
+  setDefTypes: (types: [TypeName | '', TypeName | '']) => void;
+  offMoveType: TypeName | '';
+  setOffMoveType: (t: TypeName | '') => void;
+  offDefTypes: [TypeName | '', TypeName | ''];
+  setOffDefTypes: (types: [TypeName | '', TypeName | '']) => void;
+  mode: 'defensive' | 'offensive';
+  setMode: (m: 'defensive' | 'offensive') => void;
 }
 
-function TypeCheckView({ selectedTypes, onToggle, onClear, onSetTypes, selectedTeam, teamMemberData }: TypeCheckViewProps) {
-  const mults = selectedTypes.length > 0 ? defenderMultipliers(selectedTypes) : null;
-  const { weaknesses4, weaknesses2, resists2, resists4, immunities } = mults
-    ? categorize(mults)
-    : { weaknesses4: [], weaknesses2: [], resists2: [], resists4: [], immunities: [] };
+function TypeCheckerView({
+  defTypes,
+  setDefTypes,
+  offMoveType,
+  setOffMoveType,
+  offDefTypes,
+  setOffDefTypes,
+  mode,
+  setMode,
+}: TypeCheckerViewProps) {
+  const defTypesToCheck = defTypes.filter((t): t is TypeName => !!t);
+  const defMults = defTypesToCheck.length > 0 ? defenderMultipliers(defTypesToCheck) : null;
+  const defSummary = defMults ? categorize(defMults) : null;
+
+  const offDefTypesToCheck = offDefTypes.filter((t): t is TypeName => !!t);
+  const offMult = offDefTypesToCheck.length > 0 && offMoveType ? defenderMultipliers(offDefTypesToCheck)[offMoveType as TypeName] ?? 1 : 1;
 
   return (
     <div className="space-y-4">
-      {/* Type grid */}
-      <div className="card p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">
-            {selectedTypes.length === 0
-              ? 'Pick up to 2 types'
-              : selectedTypes.length === 1
-              ? 'One type selected — pick a second for dual typing'
-              : 'Dual type selected'}
-          </p>
-          {selectedTypes.length > 0 && (
+      {/* Header */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-bold">Type Checker</h2>
+        <p className="text-sm text-muted">Check defensive weaknesses and offensive type matchups instantly.</p>
+
+        {/* Mode toggle */}
+        <div className="flex gap-1 bg-bg-elev rounded-lg p-1 w-fit">
+          {(['defensive', 'offensive'] as const).map((m) => (
             <button
+              key={m}
               type="button"
-              className="text-xs text-muted hover:text-text transition-colors"
-              onClick={onClear}
+              onClick={() => setMode(m)}
+              className={clsx(
+                'px-4 py-2 rounded-md text-sm font-semibold transition-colors capitalize',
+                mode === m ? 'bg-bg text-text shadow-card' : 'text-muted hover:text-text',
+              )}
             >
-              Clear
+              {m === 'defensive' ? '🛡 Defensive' : '⚔ Offensive'}
             </button>
-          )}
+          ))}
         </div>
-
-        {/* All 18 types as clickable tiles */}
-        <div className="grid grid-cols-6 sm:grid-cols-9 gap-1.5">
-          {TYPES.map((t) => {
-            const selIdx = selectedTypes.indexOf(t);
-            const isSelected = selIdx !== -1;
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onToggle(t)}
-                className={clsx(
-                  'relative rounded-md py-2 px-1 text-white text-[11px] font-semibold text-center leading-tight transition-all duration-150 select-none',
-                  typeBg(t),
-                  isSelected
-                    ? 'ring-2 ring-white/90 shadow-lg scale-105 z-10'
-                    : 'opacity-60 hover:opacity-90 hover:scale-105',
-                )}
-              >
-                {/* Selection order badge */}
-                {isSelected && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-white text-bg text-[9px] font-bold flex items-center justify-center shadow">
-                    {selIdx + 1}
-                  </span>
-                )}
-                {prettyName(t)}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Quick-fill from saved team */}
-        {selectedTeam && teamMemberData.some(Boolean) && (
-          <div className="flex flex-wrap gap-1.5 border-t border-line/30 pt-3">
-            <span className="text-xs text-muted self-center mr-1">From team:</span>
-            {selectedTeam.slots.map((slot, i) => {
-              const data = teamMemberData[i];
-              if (!data) return null;
-              const types = pokeTypes(data);
-              const isActive =
-                types.length === selectedTypes.length &&
-                types.every((t) => selectedTypes.includes(t));
-              return (
-                <button
-                  key={slot.pokemonName}
-                  type="button"
-                  className={clsx(
-                    'flex items-center gap-1 chip text-xs transition-colors',
-                    isActive ? 'bg-bg-elev ring-1 ring-accent/60' : 'bg-bg-hover hover:bg-bg-elev',
-                  )}
-                  onClick={() => onSetTypes(types)}
-                >
-                  <Sprite id={data.id} name={data.name} size={18} />
-                  {prettyName(slot.pokemonName)}
-                  <span className="flex gap-0.5">
-                    {types.map((t) => (
-                      <span key={t} className={clsx('w-2 h-2 rounded-full', typeBg(t))} />
-                    ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
-      {/* Results */}
-      {selectedTypes.length > 0 && mults && (
-        <div className="card p-4 space-y-4">
-          {/* Selected types header */}
-          <div className="flex items-center gap-2">
-            {selectedTypes.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onToggle(t)}
-                title={`Deselect ${t}`}
-                className={clsx(
-                  'chip text-white text-sm px-3 py-1 font-semibold transition-all hover:opacity-80 hover:line-through',
-                  typeBg(t),
-                )}
-              >
-                {prettyName(t)}
-              </button>
-            ))}
-            <span className="text-muted text-xs">(click to deselect)</span>
+      {/* DEFENSIVE MODE */}
+      {mode === 'defensive' && (
+        <div className="card p-4 border-l-4 border-blue-400 space-y-4">
+          <div className="space-y-3">
+            <p className="text-sm text-muted">If my Pokémon is this / these type(s), what is it weak to?</p>
+
+            {/* Type selectors */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted">Type 1:</span>
+                <TypeDropdown value={defTypes[0]} onChange={(t) => setDefTypes([t, defTypes[1]])} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted">Type 2:</span>
+                <TypeDropdown value={defTypes[1]} onChange={(t) => setDefTypes([defTypes[0], t])} />
+              </div>
+              {defTypesToCheck.length > 0 && (
+                <button
+                  type="button"
+                  className="text-xs text-muted hover:text-text"
+                  onClick={() => setDefTypes(['', ''])}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Type grid */}
+            <div className="grid grid-cols-6 sm:grid-cols-9 gap-1">
+              {TYPES.map((t) => {
+                const isSelected = defTypes.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setDefTypes(
+                          defTypes[0] === t ? ['', defTypes[1]] : [defTypes[0], ''],
+                        );
+                      } else {
+                        const empty = defTypes.findIndex((x) => !x);
+                        if (empty === -1) {
+                          setDefTypes([t, '']);
+                        } else {
+                          const next = [...defTypes] as typeof defTypes;
+                          next[empty] = t;
+                          setDefTypes(next);
+                        }
+                      }
+                    }}
+                    className={clsx(
+                      'rounded-md py-2 px-1 text-white text-[11px] font-semibold text-center transition-all',
+                      typeBg(t),
+                      isSelected
+                        ? 'ring-2 ring-white/90 shadow-lg scale-105'
+                        : 'opacity-60 hover:opacity-90 hover:scale-105',
+                    )}
+                  >
+                    {prettyName(t)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Matchup rows */}
+          {/* Defensive summary */}
+          {defSummary && (
+            <div className="border-t border-line/30 pt-3 space-y-2">
+              <p className="text-xs font-semibold text-muted">Defensive Summary</p>
+              <div className="space-y-1.5 text-sm">
+                {defSummary.weaknesses4.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400 font-bold w-16">Weak to ×4</span>
+                    <div className="flex flex-wrap gap-1">
+                      {defSummary.weaknesses4.map((t) => <TypeBadge key={t} type={t} size="sm" />)}
+                    </div>
+                  </div>
+                )}
+                {defSummary.weaknesses2.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-orange-400 font-bold w-16">Weak to ×2</span>
+                    <div className="flex flex-wrap gap-1">
+                      {defSummary.weaknesses2.map((t) => <TypeBadge key={t} type={t} size="sm" />)}
+                    </div>
+                  </div>
+                )}
+                {defSummary.resists4.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-teal-200 font-bold w-16">Resist ×¼</span>
+                    <div className="flex flex-wrap gap-1">
+                      {defSummary.resists4.map((t) => <TypeBadge key={t} type={t} size="sm" />)}
+                    </div>
+                  </div>
+                )}
+                {defSummary.resists2.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-teal-300 font-bold w-16">Resist ×½</span>
+                    <div className="flex flex-wrap gap-1">
+                      {defSummary.resists2.map((t) => <TypeBadge key={t} type={t} size="sm" />)}
+                    </div>
+                  </div>
+                )}
+                {defSummary.immunities.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-300 font-bold w-16">Immune ×0</span>
+                    <div className="flex flex-wrap gap-1">
+                      {defSummary.immunities.map((t) => <TypeBadge key={t} type={t} size="sm" />)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Effective damage taken */}
+              <div className="pt-2 border-t border-line/30">
+                <p className="text-xs text-muted mb-1.5">Effective damage taken by attacking type:</p>
+                <div className="flex flex-wrap gap-1">
+                  {TYPES.map((t) => {
+                    const mult = defMults?.[t] ?? 1;
+                    const label = mult === 4 ? '×4' : mult === 2 ? '×2' : mult === 0.5 ? '×½' : mult === 0.25 ? '×¼' : mult === 0 ? '×0' : '×1';
+                    const opacity = mult === 1 ? 'opacity-40' : '';
+                    return (
+                      <span key={t} className={clsx('chip text-xs px-2 py-1', typeBg(t), 'text-white', opacity)}>
+                        {prettyName(t)} {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* OFFENSIVE MODE */}
+      {mode === 'offensive' && (
+        <div className="card p-4 border-l-4 border-orange-400 space-y-4">
           <div className="space-y-3">
-            {weaknesses4.length > 0 && (
-              <MatchupRow label="Quad weak" mult="×4" color="text-red-400" types={weaknesses4} />
+            <p className="text-sm text-muted">If my move is this type, what is it strong against?</p>
+
+            {/* Move type selector */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm text-muted">Move Type:</span>
+              <TypeDropdown value={offMoveType} onChange={setOffMoveType} />
+            </div>
+
+            {/* Defender type selector */}
+            {offMoveType && (
+              <>
+                <p className="text-sm text-muted mt-3">Vs Single Type / Vs Dual Type</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted">Defender Type 1:</span>
+                    <TypeDropdown value={offDefTypes[0]} onChange={(t) => setOffDefTypes([t, offDefTypes[1]])} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted">Defender Type 2:</span>
+                    <TypeDropdown value={offDefTypes[1]} onChange={(t) => setOffDefTypes([offDefTypes[0], t])} />
+                  </div>
+                  {offDefTypesToCheck.length > 0 && (
+                    <button
+                      type="button"
+                      className="text-xs text-muted hover:text-text"
+                      onClick={() => setOffDefTypes(['', ''])}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </>
             )}
-            {weaknesses2.length > 0 && (
-              <MatchupRow label="Weak" mult="×2" color="text-orange-400" types={weaknesses2} />
-            )}
-            {immunities.length > 0 && (
-              <MatchupRow label="Immune" mult="×0" color="text-blue-300" types={immunities} />
-            )}
-            {resists4.length > 0 && (
-              <MatchupRow label="Quad resist" mult="×¼" color="text-teal-200" types={resists4} />
-            )}
-            {resists2.length > 0 && (
-              <MatchupRow label="Resists" mult="×½" color="text-teal-300" types={resists2} />
-            )}
-            {weaknesses4.length === 0 && weaknesses2.length === 0 && immunities.length === 0 &&
-              resists2.length === 0 && resists4.length === 0 && (
-              <p className="text-sm text-muted">All types deal neutral (×1) damage.</p>
-            )}
+
+            {/* Type grid */}
+            <div className="grid grid-cols-6 sm:grid-cols-9 gap-1">
+              {TYPES.map((t) => {
+                const isSelected = offMoveType === t;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setOffMoveType(isSelected ? '' : t)}
+                    className={clsx(
+                      'rounded-md py-2 px-1 text-white text-[11px] font-semibold text-center transition-all',
+                      typeBg(t),
+                      isSelected
+                        ? 'ring-2 ring-white/90 shadow-lg scale-105'
+                        : 'opacity-60 hover:opacity-90 hover:scale-105',
+                    )}
+                  >
+                    {prettyName(t)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Offensive result */}
+          {offMoveType && offDefTypesToCheck.length > 0 && (
+            <div className="border-t border-line/30 pt-3 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold">
+                  {offMult === 4 ? '×4' : offMult === 2 ? '×2' : offMult === 0.5 ? '×½' : offMult === 0.25 ? '×¼' : '×1'}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">
+                    {offMoveType} vs {offDefTypesToCheck.map(prettyName).join('/')}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {offMult === 4 ? 'Super Effective!' : offMult === 2 ? 'Super Effective' : offMult === 0.5 ? 'Not very effective' : offMult === 0.25 ? 'Not very effective' : 'Neutral'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Matchup breakdown */}
+              <div className="space-y-2 text-sm">
+                <p className="text-xs text-muted font-semibold">Strong against:</p>
+                <div className="flex flex-wrap gap-1">
+                  {TYPES.map((defType) => {
+                    const m = defenderMultipliers([defType])[offMoveType as TypeName] ?? 1;
+                    return m >= 2 ? <TypeBadge key={defType} type={defType} size="sm" /> : null;
+                  })}
+                </div>
+
+                <p className="text-xs text-muted font-semibold mt-2">Not very effective against:</p>
+                <div className="flex flex-wrap gap-1">
+                  {TYPES.map((defType) => {
+                    const m = defenderMultipliers([defType])[offMoveType as TypeName] ?? 1;
+                    return m < 1 && m > 0 ? <TypeBadge key={defType} type={defType} size="sm" /> : null;
+                  })}
+                </div>
+
+                <p className="text-xs text-muted font-semibold mt-2">No effect on:</p>
+                <div className="flex flex-wrap gap-1">
+                  {TYPES.map((defType) => {
+                    const m = defenderMultipliers([defType])[offMoveType as TypeName] ?? 1;
+                    return m === 0 ? <TypeBadge key={defType} type={defType} size="sm" /> : null;
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function MatchupRow({ label, mult, color, types }: { label: string; mult: string; color: string; types: TypeName[] }) {
+function TypeDropdown({ value, onChange }: { value: TypeName | ''; onChange: (t: TypeName | '') => void }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="w-24 shrink-0 text-right">
-        <span className="text-xs text-muted">{label} </span>
-        <span className={clsx('text-sm font-bold', color)}>{mult}</span>
-      </div>
-      <div className="flex flex-wrap gap-1">
-        {types.map((t) => <TypeBadge key={t} type={t} />)}
-      </div>
-    </div>
+    <select
+      className="input text-sm"
+      value={value}
+      onChange={(e) => onChange(e.target.value as TypeName | '')}
+    >
+      <option value="">Select type…</option>
+      {TYPES.map((t) => (
+        <option key={t} value={t}>{prettyName(t)}</option>
+      ))}
+    </select>
   );
 }
 
