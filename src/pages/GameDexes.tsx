@@ -9,6 +9,7 @@ import { EvolutionChainModal } from '../components/EvolutionChainModal';
 import { FixedSizeList as List } from 'react-window';
 import { padId, prettyName } from '../lib/utils';
 import { GAME_GROUPS, type GameGroup } from '../lib/games';
+import { GameCompletionView } from './GameCompletion';
 import {
   getPrefs,
   listGameDexForGame,
@@ -41,6 +42,7 @@ const DEX_NAMES: Record<string, string> = {
 };
 
 type StatusFilter = 'all' | 'missing' | 'registered' | 'in_game';
+type PageView = 'pokedex' | 'completion';
 
 interface IndexedPokemon {
   id: number;
@@ -70,6 +72,7 @@ export function GameDexesPage() {
 
   const [selectedId, setSelectedId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [pageView, setPageView] = useState<PageView>('pokedex');
   const navigate = useNavigate();
 
   // Context menu and modal states
@@ -314,8 +317,8 @@ export function GameDexesPage() {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Game Dexes</h1>
-        <p className="text-sm text-muted mt-1">Track Pokédex registration and current in-game Pokémon for each game.</p>
+        <h1 className="text-2xl font-bold">Game Tracker</h1>
+        <p className="text-sm text-muted mt-1">Track Pokédex progress and completion goals for each game you own.</p>
       </div>
 
       {/* Game tabs */}
@@ -340,6 +343,30 @@ export function GameDexesPage() {
         </div>
       </div>
 
+      {/* View toggle */}
+      {selectedGroup && (
+        <div className="flex gap-1 bg-bg-elev rounded-lg p-1 w-fit">
+          {(['pokedex', 'completion'] as PageView[]).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setPageView(v)}
+              className={clsx(
+                'px-3 py-1 rounded-md text-sm font-medium transition-colors',
+                pageView === v
+                  ? 'bg-bg text-text shadow-card'
+                  : 'text-muted hover:text-text',
+              )}
+            >
+              {v === 'pokedex' ? 'Pokédex Progress' : 'Game Completion'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Pokédex Progress view ─────────────────────────────────────────── */}
+      {pageView === 'pokedex' && (
+        <>
       {/* Stats bar */}
       {selectedGroup && (
         <div className="card p-4 space-y-2">
@@ -602,6 +629,13 @@ export function GameDexesPage() {
             </div>
           )}
         </div>
+      )}
+        </>
+      )}
+
+      {/* ── Game Completion view ─────────────────────────────────────────── */}
+      {pageView === 'completion' && selectedId && selectedGroup && (
+        <GameCompletionView gameId={selectedId} gameName={selectedGroup.label} />
       )}
 
       {/* Context menu */}

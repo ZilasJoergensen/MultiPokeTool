@@ -44,7 +44,7 @@ export function Layout() {
             <Tab to="/" end>Home</Tab>
             <Tab to="/pokedex">Pokédex</Tab>
             <Tab to="/storage">Storage</Tab>
-            <Tab to="/game-dexes">Game Dexes</Tab>
+            <Tab to="/game-dexes">Game Tracker</Tab>
             <Tab to="/shiny-hunter">Shiny Hunter</Tab>
             <Tab to="/team-builder">Team Builder</Tab>
             <Tab to="/battle-planner">Battle Planner</Tab>
@@ -105,7 +105,7 @@ function MobileMenu() {
           <NavLink onClick={() => setOpen(false)} to="/" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Home</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/pokedex" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Pokédex</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/storage" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Storage</NavLink>
-          <NavLink onClick={() => setOpen(false)} to="/game-dexes" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Game Dexes</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/game-dexes" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Game Tracker</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/shiny-hunter" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Shiny Hunter</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/team-builder" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Team Builder</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/battle-planner" className="block px-3 py-2 rounded-md text-base hover:bg-bg text-text">Battle Planner</NavLink>

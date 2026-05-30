@@ -1653,7 +1653,7 @@ function QuickActions({
         {inStorage ? `✓ ${storageEntries!.length} in Storage` : '+ Storage'}
       </button>
 
-      {/* Mark in Game Dex */}
+      {/* Mark in Game Tracker */}
       {ownedGroups.length > 0 && (
         <div className="relative">
           <button
@@ -1661,7 +1661,7 @@ function QuickActions({
             className={clsx('btn text-sm', anyCaught && 'text-blue-300 border-blue-300/40')}
             onClick={() => { setGameDexStatusOpen((x) => !x); setHuntOpen(false); setTeamOpen(false); }}
           >
-            ✓ Mark in Game Dex
+            ✓ Game Tracker
           </button>
           {catchOpen && (
             <div className="absolute mt-1 z-20 min-w-[11rem] card p-2 space-y-0.5">

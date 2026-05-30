@@ -226,7 +226,7 @@ export function DashboardPage() {
         <div className="grid md:grid-cols-2 gap-4">
           {/* Game Dex progress */}
           <div>
-            <SectionHeader title="Game Dex Progress" linkTo="/game-dexes" linkLabel="Open Game Dexes →" />
+            <SectionHeader title="Game Tracker" linkTo="/game-dexes" linkLabel="Open Game Tracker →" />
             <div className="card divide-y divide-line/50">
               {ownedGroups.map((g) => {
                 const registered = registeredCountByGame[g.id] ?? 0;
@@ -317,7 +317,7 @@ export function DashboardPage() {
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Quick Add</h2>
         <div className="flex flex-wrap gap-2">
-          <QuickChip to="/game-dexes" icon="✓" label="Record in Game Dex" />
+          <QuickChip to="/game-dexes" icon="✓" label="Open Game Tracker" />
           <QuickChip to="/shiny-hunter" icon="✨" label="New Hunt" />
           <QuickChip to="/team-builder" icon="⚔" label="New Team" onClick={() => Teams.create()} />
           <QuickChip to="/pokedex" icon="🔍" label="Search Pokédex" />

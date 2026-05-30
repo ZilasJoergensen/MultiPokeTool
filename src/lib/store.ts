@@ -19,9 +19,10 @@
  */
 
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
+import { GOAL_TEMPLATES, type GoalTemplate } from './game-completion-goals';
 
 const DB_NAME = 'pokedex-userdata';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 /** Singleton key for "the only row in this store". */
 const SINGLETON = '_';
@@ -78,6 +79,30 @@ export interface RecentView {
 }
 
 export type GameDexStatus = 'missing' | 'registered' | 'in_game' | 'moved_to_storage';
+
+// --- Game Completion types --------------------------------------------------
+
+export type { GoalDifficulty } from './game-completion-goals';
+
+export interface GameCompletionGoal {
+  /** Full key: `${gameId}:${relId}` (or `${gameId}:custom-${timestamp}` for custom goals). */
+  id: string;
+  gameId: string;
+  category: string;
+  title: string;
+  description?: string;
+  /** Whether this goal counts toward the completion percentage. */
+  included: boolean;
+  /** Whether the user has marked this goal as done. */
+  completed: boolean;
+  progressCurrent?: number;
+  progressTarget?: number;
+  difficulty: import('./game-completion-goals').GoalDifficulty;
+  linkedPokemonIds?: number[];
+  notes?: string;
+  /** True for user-created goals that can be deleted. */
+  isCustom?: boolean;
+}
 
 // --- Shiny hunt types -------------------------------------------------------
 
@@ -160,6 +185,11 @@ interface PokedexDB extends DBSchema {
     value: StoredPokemon;
     indexes: { 'by-pokemon': number; 'by-added': number };
   };
+  gameCompletion: {
+    key: string; // `${gameId}:${relId}`
+    value: GameCompletionGoal;
+    indexes: { 'by-game': string };
+  };
 }
 
 let _db: Promise<IDBPDatabase<PokedexDB>> | null = null;
@@ -204,6 +234,11 @@ function db() {
             stor.createIndex('by-added', 'addedAt');
           }
         }
+        // v6 — game completion goals
+        if (oldVersion < 6) {
+          const gc = idb.createObjectStore('gameCompletion', { keyPath: 'id' });
+          gc.createIndex('by-game', 'gameId');
+        }
       },
     });
   }
@@ -212,7 +247,7 @@ function db() {
 
 // Simple pub/sub so React components can re-render when this store changes
 // without coupling every page to a shared context.
-type StoreEvent = 'prefs' | 'favorites' | 'recent' | 'gameDexes' | 'shinyHunts' | 'storage';
+type StoreEvent = 'prefs' | 'favorites' | 'recent' | 'gameDexes' | 'shinyHunts' | 'storage' | 'gameCompletion';
 const listeners = new Set<(evt: StoreEvent) => void>();
 export function subscribeStore(cb: (evt: StoreEvent) => void) {
   listeners.add(cb);
@@ -531,6 +566,89 @@ export async function listGameDexStatusForPokemon(
     gameGroupIds.map((gId) => idb.get('gameDexes', `${gId}:${pokemonId}`)),
   );
   return results.filter((r): r is GameDexRecord => r != null);
+}
+
+// --- Game Completion Goals ---------------------------------------------------
+
+function templateToGoal(gameId: string, t: GoalTemplate): GameCompletionGoal {
+  return {
+    id: `${gameId}:${t.relId}`,
+    gameId,
+    category: t.category,
+    title: t.title,
+    description: t.description,
+    included: t.includedByDefault,
+    completed: false,
+    progressTarget: t.progressTarget,
+    difficulty: t.difficulty,
+    linkedPokemonIds: t.linkedPokemonIds,
+    isCustom: false,
+  };
+}
+
+export async function listGoalsForGame(gameId: string): Promise<GameCompletionGoal[]> {
+  const idb = await db();
+  const stored = await idb.getAllFromIndex('gameCompletion', 'by-game', gameId);
+  if (stored.length > 0) return stored;
+
+  // First visit — seed from templates
+  const templates = GOAL_TEMPLATES[gameId] ?? [];
+  if (templates.length === 0) return [];
+  const seeded = templates.map((t) => templateToGoal(gameId, t));
+  const tx = idb.transaction('gameCompletion', 'readwrite');
+  await Promise.all(seeded.map((g) => tx.store.put(g)));
+  await tx.done;
+  return seeded;
+}
+
+export async function setGoalState(id: string, patch: Partial<GameCompletionGoal>): Promise<void> {
+  const idb = await db();
+  const existing = await idb.get('gameCompletion', id);
+  if (!existing) return;
+  await idb.put('gameCompletion', { ...existing, ...patch });
+  emit('gameCompletion');
+}
+
+export async function addCustomGoal(
+  draft: Pick<GameCompletionGoal, 'gameId' | 'category' | 'title' | 'description' | 'included' | 'notes' | 'progressTarget'>,
+): Promise<GameCompletionGoal> {
+  const idb = await db();
+  const relId = `custom-${Date.now()}`;
+  const goal: GameCompletionGoal = {
+    ...draft,
+    id: `${draft.gameId}:${relId}`,
+    completed: false,
+    difficulty: 'custom',
+    isCustom: true,
+  };
+  await idb.put('gameCompletion', goal);
+  emit('gameCompletion');
+  return goal;
+}
+
+export async function removeGoal(id: string): Promise<void> {
+  const idb = await db();
+  await idb.delete('gameCompletion', id);
+  emit('gameCompletion');
+}
+
+export async function resetGoalsForGame(gameId: string): Promise<GameCompletionGoal[]> {
+  const idb = await db();
+  // Delete all existing goals for this game
+  const existing = await idb.getAllFromIndex('gameCompletion', 'by-game', gameId);
+  const delTx = idb.transaction('gameCompletion', 'readwrite');
+  await Promise.all(existing.map((g) => delTx.store.delete(g.id)));
+  await delTx.done;
+  // Re-seed from templates
+  const templates = GOAL_TEMPLATES[gameId] ?? [];
+  const seeded = templates.map((t) => templateToGoal(gameId, t));
+  if (seeded.length > 0) {
+    const seedTx = idb.transaction('gameCompletion', 'readwrite');
+    await Promise.all(seeded.map((g) => seedTx.store.put(g)));
+    await seedTx.done;
+  }
+  emit('gameCompletion');
+  return seeded;
 }
 
 // --- Backup / restore ------------------------------------------------------
